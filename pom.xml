@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>st.emily.trampoline</groupId>
-    <artifactId>trampoline</artifactId>
+    <groupId>st.emily.swayze</groupId>
+    <artifactId>swayze</artifactId>
     <version>0.0.1</version>
     <name>${project.artifactId}</name>
-    <description>Trampoline IRC bouncer</description>
+    <description>Swayze IRC bouncer</description>
     <inceptionYear>2014</inceptionYear>
 
     <properties>
@@ -100,7 +100,7 @@
                   </descriptorRefs>
                   <archive>
                       <manifest>
-                          <mainClass>st.emily.trampoline.TrampolineApp</mainClass>
+                          <mainClass>st.emily.swayze.SwayzeApp</mainClass>
                       </manifest>
                   </archive>
               </configuration>

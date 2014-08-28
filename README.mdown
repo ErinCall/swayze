@@ -1,18 +1,18 @@
-Trampoline
-----------
+Swayze
+------
 
-Trampoline is a bouncer written in Scala, meant to run anywhere that has
+Swayze is a bouncer written in Scala, meant to run anywhere that has
 a Java platform.
 
 
 Status
 ------
 
-Trampoline does not work and is a work in progress.
+Swayze does not work and is a work in progress.
 
 
 Building
 --------
 
-Trampoline can be built anywhere that has Java and Maven installed. Note
+Swayze can be built anywhere that has Java and Maven installed. Note
 that it's not necessary to have Scala installed.
