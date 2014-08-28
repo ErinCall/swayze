@@ -1,7 +1,7 @@
 package st.emily.trampoline
 
 
-object Trampoline {
+object TrampolineApp {
   def main(args: Array[String]) {
     println("Hello World!")
   }
