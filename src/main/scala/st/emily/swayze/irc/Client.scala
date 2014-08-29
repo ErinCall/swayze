@@ -1,6 +1,6 @@
 package st.emily.swayze.irc
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor.{ Actor, ActorRef, Props }
 import akka.io.{ IO, Tcp }
 import akka.util.ByteString
 import grizzled.slf4j.Logging
@@ -14,7 +14,7 @@ object Client {
     Props(classOf[Client], remote, replies)
 }
 
-class Client(remote: InetSocketAddress, listener: ActorRef) extends Actor with ActorLogging {
+class Client(remote: InetSocketAddress, listener: ActorRef) extends Actor {
   import Tcp._
   import context.system
 
