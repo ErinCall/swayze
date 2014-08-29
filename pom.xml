@@ -15,6 +15,33 @@
         <scala.version>2.11.2</scala.version>
     </properties>
 
+    <developers>
+        <developer>
+            <name>Emily St.</name>
+            <email>hello@emily.st</email>
+            <timezone>-8</timezone>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <url>http://opensource.org/licenses/MIT</url>
+            <name>The MIT License</name>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/emilyst/swayze.git</connection>
+        <developerConnection>scm:git:git://github.com/emilyst/swayze.git</developerConnection>
+        <url>https://github.com/emilyst/swayze/</url>
+    </scm>
+
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/emilyst/swayze/issues#issue/</url>
+    </issueManagement>
+
 <!--
   <repositories>
     <repository>
