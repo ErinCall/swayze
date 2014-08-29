@@ -1,5 +1,5 @@
 Swayze
-------
+======
 
 Swayze is a bouncer written in Scala, meant to run anywhere that has
 a Java platform.
@@ -8,7 +8,7 @@ a Java platform.
 Status
 ------
 
-Swayze does not work and is a work in progress.
+**Swayze does not yet work** and is a work in progress.
 
 
 Building
@@ -16,3 +16,32 @@ Building
 
 Swayze can be built anywhere that has Java and Maven installed. Note
 that it's not necessary to have Scala installed.
+
+To compile, use this command:
+
+    mvn compile
+
+To build the JAR (Java Archive) for distribution, use this command:
+
+    mvn package
+
+When this command completes, if it's successful, the JAR will be located
+at `target/swayze-${version}.jar`.
+
+
+Testing
+-------
+
+Swayze makes use of [simplespec] [1] for tests. To run the tests, use this
+command:
+
+    mvn test
+
+
+License
+-------
+
+Swayze is released under the MIT license and is freely distributable.
+
+
+[1]: https://github.com/SimpleFinance/simplespec
