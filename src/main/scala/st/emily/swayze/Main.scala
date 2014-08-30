@@ -2,16 +2,16 @@ package st.emily.swayze
 
 import akka.actor.{ ActorSystem, Props }
 import java.net.InetSocketAddress
-import st.emily.swayze.irc.{ Client, ClientListener }
+import st.emily.swayze.irc.{ Client, Connection }
 
 
 object SwayzeApp {
   def main(args: Array[String]) {
     val system   = ActorSystem("tcp")
-    val listener = system.actorOf(Props[ClientListener], name = "listener")
-    val client   = system.actorOf(
-      Props(new Client(new InetSocketAddress("irc.emily.st", 6667), listener)),
-      name = "client"
+    val client = system.actorOf(Props[Client], name = "client")
+    val connection   = system.actorOf(
+      Props(new Connection(new InetSocketAddress("irc.emily.st", 6667), client)),
+      name = "connection"
     )
   }
 }
