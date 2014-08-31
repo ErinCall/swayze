@@ -1,16 +1,17 @@
 package st.emily.swayze.irc
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated }
 import akka.io.{ IO, Tcp }
+import akka.util.ByteString
 import java.net.InetSocketAddress
 
 
 object IrcClientConnection {
-  def props(remote: InetSocketAddress) =
-    Props(classOf[IrcClientConnection], remote)
+  def props(remote: InetSocketAddress, service: ActorRef) =
+    Props(classOf[IrcClientConnection], remote, service)
 }
 
-class IrcClientConnection(remote: InetSocketAddress) extends Actor with ActorLogging {
+class IrcClientConnection(remote: InetSocketAddress, service: ActorRef) extends Actor with ActorLogging {
   import Tcp._
   import context.system
 
@@ -19,7 +20,27 @@ class IrcClientConnection(remote: InetSocketAddress) extends Actor with ActorLog
   override def receive: Receive = {
     case Tcp.Connected(remote, _) =>
       log.debug("Remote address {} connected", remote)
-      sender ! Tcp.Register(context.actorOf(IrcClientService.props(remote, sender)))
+
+      sender() ! Tcp.Register(self)
+      context.watch(self) // XXX does this set up death watch correctly?
+
+      context.become {
+        case Tcp.Received(data) =>
+          val text = data.utf8String.trim
+          log.debug("Received '{}' from remote address {}", text, remote)
+
+          // XXX buffer up, build IrcMessage objects, send to service actor
+
+          service ! text
+
+        case _: Tcp.ConnectionClosed =>
+          log.debug("Stopping, because connection for remote address {} closed", remote)
+          context.stop(self)
+
+        case Terminated(`self`) =>
+          log.debug("Stopping, because connection for remote address {} died", remote)
+          context.stop(self)
+      }
   }
 }
 
