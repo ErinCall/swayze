@@ -25,8 +25,9 @@ To build the JAR (Java Archive) for distribution, use this command:
 
     mvn package
 
-When this command completes, if it's successful, a JAR which can be
-executed standalone will be located at
+When this command completes, if it's successful, a "fat jar" (a Java
+archive with all its dependencies which can be executed as a standalone
+program) will be located at
 `target/swayze-${version}-jar-with-dependencies.jar`.
 
 
