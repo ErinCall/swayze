@@ -18,14 +18,14 @@ class IrcClientConnection(remote: InetSocketAddress, service: ActorRef) extends 
   IO(Tcp) ! Connect(remote)
 
   override def receive: Receive = {
-    case Tcp.Connected(remote, _) =>
+    case Connected(remote, local) =>
       log.debug("Remote address {} connected", remote)
 
-      sender() ! Tcp.Register(self)
+      sender() ! Register(self)
       context.watch(self) // XXX does this set up death watch correctly?
 
       context.become {
-        case Tcp.Received(data) =>
+        case Received(data) =>
           val text = data.utf8String.trim
           log.debug("Received '{}' from remote address {}", text, remote)
 
@@ -33,7 +33,7 @@ class IrcClientConnection(remote: InetSocketAddress, service: ActorRef) extends 
 
           service ! text
 
-        case _: Tcp.ConnectionClosed =>
+        case _: ConnectionClosed =>
           log.debug("Stopping, because connection for remote address {} closed", remote)
           context.stop(self)
 

@@ -5,11 +5,9 @@ import java.net.InetSocketAddress
 import st.emily.swayze.irc.{ IrcClientConnection, IrcClientService }
 
 
-object SwayzeApp {
-  def main(args: Array[String]) {
-    val system = ActorSystem("irc-client-service-system")
-    val remote = new InetSocketAddress("irc.emily.st", 6667)
-    val service = system.actorOf(IrcClientService.props(), "irc-client-service")
-    system.actorOf(IrcClientConnection.props(remote, service), "irc-client-connection")
-  }
+object SwayzeApp extends App {
+  val system = ActorSystem("irc-client-service-system")
+  val remote = new InetSocketAddress("irc.emily.st", 6667)
+  val service = system.actorOf(IrcClientService.props(), "irc-client-service")
+  system.actorOf(IrcClientConnection.props(remote, service), "irc-client-connection")
 }
