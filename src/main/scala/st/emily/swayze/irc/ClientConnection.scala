@@ -6,12 +6,12 @@ import akka.util.ByteString
 import java.net.InetSocketAddress
 
 
-object IrcClientConnection {
+object ClientConnection {
   def props(remote: InetSocketAddress, service: ActorRef) =
-    Props(classOf[IrcClientConnection], remote, service)
+    Props(classOf[ClientConnection], remote, service)
 }
 
-class IrcClientConnection(remote: InetSocketAddress, service: ActorRef) extends Actor with ActorLogging {
+class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Actor with ActorLogging {
   import Tcp._
   import context.system
 

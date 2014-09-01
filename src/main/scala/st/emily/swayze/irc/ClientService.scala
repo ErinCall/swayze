@@ -7,13 +7,13 @@ import java.net.InetSocketAddress
 import scala.util.matching.Regex
 
 
-object IrcClientService {
+object ClientService {
   def props(): Props =
-    Props(new IrcClientService())
+    Props(new ClientService())
 }
 
 
-class IrcClientService() extends Actor with ActorLogging {
+class ClientService() extends Actor with ActorLogging {
   // XXX handle IrcMessage objects
   // XXX receive connection for sending messages back
   def receive: Receive = {
