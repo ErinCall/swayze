@@ -17,7 +17,8 @@ a mobile device.
 Status
 ------
 
-**Swayze does not yet work** and is a work in progress.
+**Swayze does not yet work** and is a work in progress. It should be
+considered experimental.
 
 
 Building
