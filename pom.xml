@@ -93,6 +93,7 @@
                 <configuration>
                     <verbose>true</verbose>
                     <args>
+                        <arg>-explaintypes</arg>
                         <arg>-unchecked</arg>
                         <arg>-deprecation</arg>
                     </args>
