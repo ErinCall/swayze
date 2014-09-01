@@ -15,20 +15,25 @@ Building
 --------
 
 Swayze can be built anywhere that has Java and Maven installed. Note
-that it's not necessary to have Scala installed.
+that it's _not_ necessary to have Scala installed.
 
 To compile, use this command:
 
     mvn compile
 
-To build the JAR (Java Archive) for distribution, use this command:
+
+Running
+-------
+
+To build the JAR (Java Archive) for running, use this command:
 
     mvn package
 
-When this command completes, if it's successful, a "fat jar" (a Java
-archive with all its dependencies which can be executed as a standalone
-program) will be located at
-`target/swayze-${version}-jar-with-dependencies.jar`.
+This command builds a shaded jar at `target/swayze-${version}.jar` which
+can be run as a standalone program using Java, as in the following
+example.
+
+    java -jar target/swayze-0.0.1.jar
 
 
 Testing
