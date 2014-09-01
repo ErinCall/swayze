@@ -25,13 +25,13 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
   import context.system
 
   IO(Tcp) ! Connect(remote)
+  context.watch(self)  // setup death watch
 
   override def receive: Receive = {
     case Connected(remote, local) =>
       log.debug("Remote address {} connected", remote)
 
       sender() ! Register(self)
-      context.watch(self) // XXX does this set up death watch correctly?
 
       context.become {
         case Received(data) =>
