@@ -55,6 +55,18 @@ command:
     mvn test
 
 
+Documentation
+-------------
+
+If you'd like documentation of Swayze's innards, generate the scaladocs
+with this command:
+
+    mvn scala:doc
+
+Once that command completes, navigate to
+`target/site/scaladocs/index.html` in your browser.
+
+
 License
 -------
 
