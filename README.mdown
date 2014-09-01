@@ -39,7 +39,7 @@ To build the JAR (Java Archive) for running, use this command:
 
     mvn package
 
-This command builds a shaded jar at `target/swayze-${version}.jar` which
+This command builds a shaded JAR at `target/swayze-${version}.jar` which
 can be run as a standalone program using Java, as in the following
 example.
 
