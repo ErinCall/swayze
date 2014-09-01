@@ -12,7 +12,7 @@ object ClientService {
     Props(new ClientService())
 }
 
-
+/** Handles IRC events.  */
 class ClientService() extends Actor with ActorLogging {
   // XXX handle IrcMessage objects
   // XXX receive connection for sending messages back

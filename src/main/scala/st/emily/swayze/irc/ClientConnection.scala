@@ -11,6 +11,15 @@ object ClientConnection {
     Props(classOf[ClientConnection], remote, service)
 }
 
+
+/** Maintains the network connection to an IRC server.
+ *
+ * Provides the TCP connection to an IRC server on behalf of its daemon
+ * supervisor. Delegates IRC events to a client service for handling.
+ *
+ * @param remote the server's info for connecting (a host and port)
+ * @param service client service for handling IRC events
+ */
 class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Actor with ActorLogging {
   import Tcp._
   import context.system
