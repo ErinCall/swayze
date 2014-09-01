@@ -1,8 +1,17 @@
 Swayze
 ======
 
-Swayze is a bouncer written in Scala, meant to run anywhere that has
-a Java platform.
+Swayze is an IRC bouncer written in Scala, meant to run anywhere that
+can run Java.
+
+What's a bouncer? A bouncer is an IRC client that remains connected to
+IRC networks on your behalf. With a bouncer, instead of connecting
+directly to IRC, the user just logs into the bouncer, and the bouncer
+forwards along the messages it sees. It's common to use a bouncer for
+a few reasons, such as holding messages so they're not missed, pushing
+notifications in real time, and keeping connection information in
+a centralized place so that a user can use it from anywhere, even
+a mobile device.
 
 
 Status
