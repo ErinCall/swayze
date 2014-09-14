@@ -1,14 +1,18 @@
 package st.emily.swayze
 
 import akka.actor.{ ActorSystem, Props }
-import java.net.InetSocketAddress
-import st.emily.swayze.irc.{ ClientConnection, ClientService }
+import com.typesafe.config.ConfigFactory
 
 
-/** Application entry point */
+/**
+ * Application entry point
+ */
 object SwayzeApp extends App {
-  val system = ActorSystem("client-service-system")
-  val remote = new InetSocketAddress("irc.emily.st", 6667)
-  val service = system.actorOf(ClientService.props(), "client-service")
-  system.actorOf(ClientConnection.props(remote, service), "client-connection")
+  val system  = ActorSystem("bouncer-system")
+
+  val bouncer = system.actorOf(
+    BouncerService.props(system, ConfigFactory.load()),
+    "bouncer-service"
+  )
 }
+

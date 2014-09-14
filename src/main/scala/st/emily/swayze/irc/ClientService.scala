@@ -18,9 +18,7 @@ class ClientService() extends Actor with ActorLogging {
   // XXX receive connection for sending messages back
   def receive: Receive = {
     case message: String =>
-      log.info("got message {}", message)
     case _ =>
-      log.info("got unknown")
   }
 }
 

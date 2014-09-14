@@ -29,7 +29,7 @@ that it's _not_ necessary to have Scala installed.
 
 To compile, use this command:
 
-    mvn compile
+    mvn clean compile
 
 
 Running
@@ -37,7 +37,7 @@ Running
 
 To build the JAR (Java Archive) for running, use this command:
 
-    mvn package
+    mvn clean package
 
 This command builds a shaded JAR at `target/swayze-${version}.jar` which
 can be run as a standalone program using Java, as in the following
@@ -52,7 +52,7 @@ Testing
 Swayze makes use of [simplespec] [1] for tests. To run the tests, use this
 command:
 
-    mvn test
+    mvn clean test
 
 
 Documentation
@@ -61,7 +61,7 @@ Documentation
 If you'd like documentation of Swayze's innards, generate the scaladocs
 with this command:
 
-    mvn scala:doc
+    mvn clean scala:doc
 
 Once that command completes, navigate to
 `target/site/scaladocs/index.html` in your browser.
