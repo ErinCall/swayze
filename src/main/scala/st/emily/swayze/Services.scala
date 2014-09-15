@@ -19,8 +19,7 @@ object BouncerService {
  *
  * @param config Bouncer configuration
  */
-class BouncerService(system: ActorSystem, config: Config)
-extends Actor with ActorLogging {
+class BouncerService(system: ActorSystem, config: Config) extends Actor with ActorLogging {
   val remote  = new InetSocketAddress("irc.emily.st", 6667)
   val service = system.actorOf(ClientService.props(), "client-service")
 

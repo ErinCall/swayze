@@ -1,7 +1,6 @@
 package st.emily.swayze
 
 import akka.actor.{ ActorSystem, Props }
-import com.typesafe.config.ConfigFactory
 
 
 /**
@@ -11,7 +10,7 @@ object SwayzeApp extends App {
   val system  = ActorSystem("bouncer-system")
 
   val bouncer = system.actorOf(
-    BouncerService.props(system, ConfigFactory.load()),
+    BouncerService.props(system, SwayzeConfig.getConfig),
     "bouncer-service"
   )
 }
