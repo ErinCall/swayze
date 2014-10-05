@@ -36,17 +36,25 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
 
   override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
 
-  case class Ack(length: Int) extends Event
+  case class Ack(offset: Long) extends Event
 
   override def receive: Receive = {
     case Connected(remote, local) =>
       log.info(s"Connected to $remote")
       sender() ! Register(self, keepOpenOnPeerClosed = true)
+      sender() ! Write(ByteString("NICK swayze \r\n"))
+      sender() ! Write(ByteString("USER swayze swayze localhost :swayze \r\n"))
+
     case Received(data) =>
       self ! Ack(currentOffset)
       buffer(data)
+      if (data.utf8String.trim.startsWith("PING")) {
+        sender() ! Write(ByteString(data.utf8String.replaceAll("PING", "PONG")))
+      }
+
     case Ack(ack) =>
       acknowledge(ack)
+
     case PeerClosed =>
       if (storage.isEmpty) {
         context.stop(self)
@@ -58,7 +66,7 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
   def closing: Receive = {
     case CommandFailed(_: Write) =>
       context.become({
-        case ack: Int =>
+        case ack: Long =>
           acknowledge(ack)
       }, discardOld = false)
 
@@ -69,7 +77,7 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
       }
   }
 
-  private[this] var storageOffset = 0
+  private[this] var storageOffset = 0L
   private[this] var storage       = Vector.empty[ByteString]
   private[this] var stored        = 0L
   private[this] var transferred   = 0L
@@ -88,15 +96,15 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
 
     if (stored > maxStored) {
       log.warning(s"Buffer overrun while connected to $remote")
-      context stop self
+      context.stop(self)
     } else if (stored > highWatermark) {
       log.debug(s"Suspending reading at $currentOffset")
-      self ! SuspendReading
+      sender() ! SuspendReading
       suspended = true
     }
   }
 
-  private[this] def acknowledge(ack: Int): Unit = {
+  private[this] def acknowledge(ack: Long): Unit = {
     require(ack == storageOffset, s"received ack $ack at $storageOffset")
     require(storage.nonEmpty, s"storage was empty at ack $ack")
 
@@ -109,7 +117,7 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
 
     if (suspended && stored < lowWatermark) {
       log.debug("Resuming reading")
-      self ! ResumeReading
+      sender() ! ResumeReading
       suspended = false
     }
 
