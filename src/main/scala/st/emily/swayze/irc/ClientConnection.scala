@@ -51,6 +51,7 @@ class ClientConnection(remote: InetSocketAddress,
       }
 
     case PeerClosed =>
+      sender() ! Close
       context.stop(self)
 
     case CommandFailed(_: Write) =>
