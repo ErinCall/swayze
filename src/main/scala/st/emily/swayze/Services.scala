@@ -30,4 +30,3 @@ class BouncerService(system: ActorSystem, config: SwayzeConfig) extends Actor wi
     case _ =>
   }
 }
-

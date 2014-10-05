@@ -1,14 +1,13 @@
-package st.emily.swayze.tests
+package st.emily.swayze.conf
 
 import com.simple.simplespec.Spec
 import org.junit.Test
 
-import st.emily.swayze.conf.SwayzeConfig
-import st.emily.swayze.types.NetworkConfiguration
+import st.emily.swayze.representation.NetworkConfiguration
 
 
 class ConfigurationSpec extends Spec {
-  class Config {
+  class `Network configuration tests` {
     @Test def `Loads networks` = {
       val text = """
                  swayze {
@@ -47,4 +46,3 @@ class ConfigurationSpec extends Spec {
     }
   }
 }
-

@@ -7,10 +7,9 @@ import st.emily.swayze.SwayzeApp
 
 
 class SwayzeSpec extends Spec {
-  class SwayzeApp {
+  class `Application tests` {
     @Test def `stub test` = {
       1.must(be(1))
     }
   }
 }
-

@@ -3,12 +3,12 @@ package st.emily.swayze.conf
 import com.typesafe.config.ConfigFactory
 import scala.collection.JavaConversions._
 
-import st.emily.swayze.types.NetworkConfiguration
+import st.emily.swayze.representation.NetworkConfiguration
 
 
 object SwayzeConfig {
-  def apply(config: String): SwayzeConfig = {
-    new SwayzeConfig(config)
+  def apply(text: String): SwayzeConfig = {
+    new SwayzeConfig(text)
   }
 }
 
@@ -26,4 +26,3 @@ class SwayzeConfig(text: String) {
     }.toList
   }
 }
-

@@ -52,4 +52,3 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
       }
   }
 }
-

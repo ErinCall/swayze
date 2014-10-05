@@ -29,4 +29,3 @@ object SwayzeApp extends App {
     "bouncer-service"
   )
 }
-

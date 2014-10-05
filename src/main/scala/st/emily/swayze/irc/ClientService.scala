@@ -21,4 +21,3 @@ class ClientService() extends Actor with ActorLogging {
     case _ =>
   }
 }
-
