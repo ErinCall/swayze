@@ -26,30 +26,27 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
   import Tcp._
   import context.system
 
-  case class Ack(offset: Int) extends Event
-
   context.watch(self)
 
-  // there is not recovery for broken connections
   override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
   override def preStart: Unit = IO(Tcp) ! Connect(remote)
 
-  // do not restart
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
-  def receive: Receive = {
-    case Connected(remote, local) =>
-      log.info("Connected to: {}", remote)
-      sender() ! Register(self, keepOpenOnPeerClosed = true)
+  override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
 
+  case class Ack(length: Int) extends Event
+
+  override def receive: Receive = {
+    case Connected(remote, local) =>
+      log.info(s"Connected to $remote")
+      sender() ! Register(self, keepOpenOnPeerClosed = true)
     case Received(data) =>
       self ! Ack(currentOffset)
       buffer(data)
-
     case Ack(ack) =>
       acknowledge(ack)
-
     case PeerClosed =>
       if (storage.isEmpty) {
         context.stop(self)
@@ -72,28 +69,25 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
       }
   }
 
-  override def postStop(): Unit = {
-    log.info(s"Transferred $transferred bytes from/to [$remote]")
-  }
-
   private[this] var storageOffset = 0
   private[this] var storage       = Vector.empty[ByteString]
   private[this] var stored        = 0L
   private[this] var transferred   = 0L
-
-  val maxStored                   = 100000000L
-  val highWatermark               = maxStored * 5 / 10
-  val lowWatermark                = maxStored * 3 / 10
+  private[this] val maxStored     = 100000000L
+  private[this] val highWatermark = maxStored * 5 / 10
+  private[this] val lowWatermark  = maxStored * 3 / 10
   private[this] var suspended     = false
 
   private[this] def currentOffset = storageOffset + storage.size
 
   private[this] def buffer(data: ByteString): Unit = {
+    log.debug(s"Buffering: ${data.utf8String.trim}")
+
     storage :+= data
     stored += data.size
 
     if (stored > maxStored) {
-      log.warning(s"Buffer overrun while connected to [$remote]")
+      log.warning(s"Buffer overrun while connected to $remote")
       context stop self
     } else if (stored > highWatermark) {
       log.debug(s"Suspending reading at $currentOffset")
@@ -118,5 +112,7 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
       self ! ResumeReading
       suspended = false
     }
+
+    // TODO: do stuff here
   }
 }
