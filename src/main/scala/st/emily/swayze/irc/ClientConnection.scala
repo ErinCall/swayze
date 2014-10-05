@@ -1,6 +1,6 @@
 package st.emily.swayze.irc
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props, SupervisorStrategy, Terminated }
 import akka.io.{ IO, Tcp }
 import akka.util.ByteString
 import java.net.InetSocketAddress
@@ -12,7 +12,9 @@ object ClientConnection {
 }
 
 
-/** Maintains the network connection to an IRC server.
+/**
+ * Maintains the network connection to an IRC server. Heavily adapted
+ * from the EchoManager/EchoHandler sample included with Akka.
  *
  * Provides the TCP connection to an IRC server on behalf of its daemon
  * supervisor. Delegates IRC events to a client service for handling.
@@ -24,31 +26,97 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
   import Tcp._
   import context.system
 
-  IO(Tcp) ! Connect(remote)
-  context.watch(self)  // setup death watch
+  case class Ack(offset: Int) extends Event
 
-  override def receive: Receive = {
+  context.watch(self)
+
+  // there is not recovery for broken connections
+  override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
+
+  override def preStart: Unit = IO(Tcp) ! Connect(remote)
+
+  // do not restart
+  override def postRestart(thr: Throwable): Unit = context.stop(self)
+
+  def receive: Receive = {
     case Connected(remote, local) =>
-      log.debug("Remote address {} connected", remote)
+      log.info("Connected to: {}", remote)
+      sender() ! Register(self, keepOpenOnPeerClosed = true)
 
-      sender() ! Register(self)
+    case Received(data) =>
+      self ! Ack(currentOffset)
+      buffer(data)
 
-      context.become {
-        case Received(data) =>
-          val text = data.utf8String.trim
-          log.debug("Received '{}' from remote address {}", text, remote)
+    case Ack(ack) =>
+      acknowledge(ack)
 
-          // XXX buffer up, build IrcMessage objects, send to service actor
-
-          service ! text
-
-        case _: ConnectionClosed =>
-          log.debug("Stopping, because connection for remote address {} closed", remote)
-          context.stop(self)
-
-        case Terminated(`self`) =>
-          log.debug("Stopping, because connection for remote address {} died", remote)
-          context.stop(self)
+    case PeerClosed =>
+      if (storage.isEmpty) {
+        context.stop(self)
+      } else {
+        context.become(closing)
       }
+  }
+
+  def closing: Receive = {
+    case CommandFailed(_: Write) =>
+      context.become({
+        case ack: Int =>
+          acknowledge(ack)
+      }, discardOld = false)
+
+    case Ack(ack) =>
+      acknowledge(ack)
+      if (storage.isEmpty) {
+        context.stop(self)
+      }
+  }
+
+  override def postStop(): Unit = {
+    log.info(s"Transferred $transferred bytes from/to [$remote]")
+  }
+
+  private[this] var storageOffset = 0
+  private[this] var storage       = Vector.empty[ByteString]
+  private[this] var stored        = 0L
+  private[this] var transferred   = 0L
+
+  val maxStored                   = 100000000L
+  val highWatermark               = maxStored * 5 / 10
+  val lowWatermark                = maxStored * 3 / 10
+  private[this] var suspended     = false
+
+  private[this] def currentOffset = storageOffset + storage.size
+
+  private[this] def buffer(data: ByteString): Unit = {
+    storage :+= data
+    stored += data.size
+
+    if (stored > maxStored) {
+      log.warning(s"Buffer overrun while connected to [$remote]")
+      context stop self
+    } else if (stored > highWatermark) {
+      log.debug(s"Suspending reading at $currentOffset")
+      self ! SuspendReading
+      suspended = true
+    }
+  }
+
+  private[this] def acknowledge(ack: Int): Unit = {
+    require(ack == storageOffset, s"received ack $ack at $storageOffset")
+    require(storage.nonEmpty, s"storage was empty at ack $ack")
+
+    val size = storage(0).size
+    stored -= size
+    transferred += size
+
+    storageOffset += 1
+    storage = storage.drop(1)
+
+    if (suspended && stored < lowWatermark) {
+      log.debug("Resuming reading")
+      self ! ResumeReading
+      suspended = false
+    }
   }
 }

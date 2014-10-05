@@ -14,7 +14,11 @@ object ClientService {
     Props(new ClientService(config))
 }
 
-/** Handles IRC events.  */
+/**
+ * Handles IRC events.
+ *
+ * @param config The configuration specific to this network
+ */
 class ClientService(config: NetworkConfiguration) extends Actor with ActorLogging {
   // XXX handle IrcMessage objects
   // XXX receive connection for sending messages back
