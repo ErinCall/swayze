@@ -16,6 +16,7 @@ class ConfigurationSpec extends Spec {
                        name     = Some Network
                        host     = irc.example.com
                        port     = 6667
+                       encoding = UTF-8
                        channels = [ "#channel" ]
                        modules  = []
                      }
@@ -23,6 +24,7 @@ class ConfigurationSpec extends Spec {
                        name     = Another Network
                        host     = irc.example.net
                        port     = 6667
+                       encoding = UTF-8
                        channels = [ "#room" ]
                        modules  = [ "away" ]
                      }
@@ -35,11 +37,13 @@ class ConfigurationSpec extends Spec {
         List(NetworkConfiguration(name     = "Some Network",
                                   host     = "irc.example.com",
                                   port     = 6667,
+                                  encoding = "UTF-8",
                                   channels = List("#channel"),
                                   modules  = List()),
              NetworkConfiguration(name     = "Another Network",
                                   host     = "irc.example.net",
                                   port     = 6667,
+                                  encoding = "UTF-8",
                                   channels = List("#room"),
                                   modules  = List("away")))
        ))

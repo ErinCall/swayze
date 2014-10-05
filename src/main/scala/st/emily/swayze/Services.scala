@@ -26,7 +26,7 @@ class BouncerService(system: ActorSystem, config: SwayzeConfig) extends Actor wi
     val name    = networkConfig.uriSafeName
     val remote  = new InetSocketAddress(networkConfig.host, networkConfig.port)
     val service = system.actorOf(ClientService.props(networkConfig), name + "-client-service")
-    system.actorOf(ClientConnection.props(remote, service), name + "-client-connection")
+    system.actorOf(ClientConnection.props(remote, service, networkConfig), name + "-client-connection")
   }
 
   override def receive: Receive = LoggingReceive {

@@ -21,6 +21,7 @@ class SwayzeConfig(text: String) {
       NetworkConfiguration(name     = network.getString("name"),
                            host     = network.getString("host"),
                            port     = network.getInt("port"),
+                           encoding = network.getString("encoding"),
                            channels = network.getStringList("channels").toList,
                            modules  = network.getStringList("modules").toList)
     }.toList

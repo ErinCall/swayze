@@ -7,6 +7,7 @@ package st.emily.swayze.representation
 case class NetworkConfiguration(name:     String,
                                 host:     String,
                                 port:     Int,
+                                encoding: String,
                                 channels: Seq[String],
                                 modules:  Seq[String]) {
 

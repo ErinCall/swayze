@@ -16,6 +16,7 @@ object SwayzeApp extends App {
                          name     = Ladynet
                          host     = irc.emily.st
                          port     = 6667
+                         encoding = UTF-8
                          channels = [ "#parlour" ]
                          modules  = []
                        }

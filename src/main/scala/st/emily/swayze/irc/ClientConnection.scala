@@ -6,10 +6,14 @@ import akka.io.{ IO, Tcp }
 import akka.util.ByteString
 import java.net.InetSocketAddress
 
+import st.emily.swayze.representation.NetworkConfiguration
+
 
 object ClientConnection {
-  def props(remote: InetSocketAddress, service: ActorRef) =
-    Props(classOf[ClientConnection], remote, service)
+  def props(remote: InetSocketAddress,
+            service: ActorRef,
+            config: NetworkConfiguration) =
+    Props(classOf[ClientConnection], remote, service, config)
 }
 
 
@@ -21,8 +25,11 @@ object ClientConnection {
  *
  * @param remote the server's info for connecting (a host and port)
  * @param service client service for handling IRC events
+ * @param config The configuration specific to this network
  */
-class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Actor with ActorLogging {
+class ClientConnection(remote: InetSocketAddress,
+                       service: ActorRef,
+                       config: NetworkConfiguration) extends Actor with ActorLogging {
   import Tcp._
   import context.system
 
@@ -32,15 +39,15 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
     case Connected(remote, local) =>
       sender() ! Register(self, keepOpenOnPeerClosed = true)
 
-      sender() ! Write(ByteString("NICK swayze \r\n"))
-      sender() ! Write(ByteString("USER swayze swayze localhost :swayze \r\n"))
+      send("NICK swayze")
+      send("USER swayze swayze localhost :swayze")
 
     case Received(data) =>
       transferred += data.size
 
-      if (data.utf8String.trim.startsWith("PING")) {
-        sender() ! Write(ByteString(data.utf8String.replaceAll("PING", "PONG")))
-        sender() ! Write(ByteString("JOIN #swayze\r\n"))
+      if (data.decodeString(config.encoding).trim.startsWith("PING")) {
+        send(data.decodeString(config.encoding).trim.replaceAll("PING", "PONG"))
+        send("JOIN #swayze")
       }
 
     case PeerClosed =>
@@ -54,6 +61,10 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
       context.stop(self)
   }
 
+  def send(text: String): Unit = {
+    sender() ! Write(ByteString(text + "\r\n", config.encoding))
+  }
+
   override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
   override def preStart: Unit = IO(Tcp) ! Connect(remote)
@@ -62,5 +73,4 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
 
   var transferred: Long = 0
   override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
-
 }
