@@ -21,10 +21,12 @@ object BouncerService {
  * @param config Swayze configuration
  */
 class BouncerService(system: ActorSystem, config: SwayzeConfig) extends Actor with ActorLogging {
-  val remote  = new InetSocketAddress("irc.emily.st", 6667)
-  val service = system.actorOf(ClientService.props(), "client-service")
-
-  system.actorOf(ClientConnection.props(remote, service), "client-connection")
+  config.getNetworkConfigs.foreach { networkConfig =>
+    val name    = networkConfig.uriSafeName
+    val remote  = new InetSocketAddress(networkConfig.host, networkConfig.port)
+    val service = system.actorOf(ClientService.props(networkConfig), name + "-client-service")
+    system.actorOf(ClientConnection.props(remote, service), name + "-client-connection")
+  }
 
   override def receive: Receive = {
     case _ =>

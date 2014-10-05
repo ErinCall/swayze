@@ -6,14 +6,16 @@ import akka.util.ByteString
 import java.net.InetSocketAddress
 import scala.util.matching.Regex
 
+import st.emily.swayze.representation.NetworkConfiguration
+
 
 object ClientService {
-  def props(): Props =
-    Props(new ClientService())
+  def props(config: NetworkConfiguration): Props =
+    Props(new ClientService(config))
 }
 
 /** Handles IRC events.  */
-class ClientService() extends Actor with ActorLogging {
+class ClientService(config: NetworkConfiguration) extends Actor with ActorLogging {
   // XXX handle IrcMessage objects
   // XXX receive connection for sending messages back
   def receive: Receive = {
