@@ -22,7 +22,7 @@ object ClientService {
 class ClientService(config: NetworkConfiguration) extends Actor with ActorLogging {
   // XXX handle IrcMessage objects
   // XXX receive connection for sending messages back
-  def receive: Receive = {
+  override def receive: Receive = {
     case message: String =>
     case _ =>
   }

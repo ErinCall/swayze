@@ -1,6 +1,7 @@
 package st.emily.swayze.irc
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props, SupervisorStrategy, Terminated }
+import akka.event.LoggingReceive
 import akka.io.{ IO, Tcp }
 import akka.util.ByteString
 import java.net.InetSocketAddress
@@ -13,8 +14,7 @@ object ClientConnection {
 
 
 /**
- * Maintains the network connection to an IRC server. Heavily adapted
- * from the EchoManager/EchoHandler sample included with Akka.
+ * Maintains the network connection to an IRC server.
  *
  * Provides the TCP connection to an IRC server on behalf of its daemon
  * supervisor. Delegates IRC events to a client service for handling.
@@ -28,99 +28,39 @@ class ClientConnection(remote: InetSocketAddress, service: ActorRef) extends Act
 
   context.watch(self)
 
+  override def receive: Receive = LoggingReceive {
+    case Connected(remote, local) =>
+      sender() ! Register(self, keepOpenOnPeerClosed = true)
+
+      sender() ! Write(ByteString("NICK swayze \r\n"))
+      sender() ! Write(ByteString("USER swayze swayze localhost :swayze \r\n"))
+
+    case Received(data) =>
+      transferred += data.size
+
+      if (data.utf8String.trim.startsWith("PING")) {
+        sender() ! Write(ByteString(data.utf8String.replaceAll("PING", "PONG")))
+        sender() ! Write(ByteString("JOIN #swayze\r\n"))
+      }
+
+    case PeerClosed =>
+      context.stop(self)
+
+    case CommandFailed(_: Write) =>
+      context.stop(self)
+
+    case Terminated(self) =>
+      log.error("Connection lost")
+      context.stop(self)
+  }
+
   override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
   override def preStart: Unit = IO(Tcp) ! Connect(remote)
 
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
+  var transferred: Long = 0
   override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
 
-  case class Ack(offset: Long) extends Event
-
-  override def receive: Receive = {
-    case Connected(remote, local) =>
-      log.info(s"Connected to $remote")
-      sender() ! Register(self, keepOpenOnPeerClosed = true)
-      sender() ! Write(ByteString("NICK swayze \r\n"))
-      sender() ! Write(ByteString("USER swayze swayze localhost :swayze \r\n"))
-
-    case Received(data) =>
-      self ! Ack(currentOffset)
-      buffer(data)
-      if (data.utf8String.trim.startsWith("PING")) {
-        sender() ! Write(ByteString(data.utf8String.replaceAll("PING", "PONG")))
-      }
-
-    case Ack(ack) =>
-      acknowledge(ack)
-
-    case PeerClosed =>
-      if (storage.isEmpty) {
-        context.stop(self)
-      } else {
-        context.become(closing)
-      }
-  }
-
-  def closing: Receive = {
-    case CommandFailed(_: Write) =>
-      context.become({
-        case ack: Long =>
-          acknowledge(ack)
-      }, discardOld = false)
-
-    case Ack(ack) =>
-      acknowledge(ack)
-      if (storage.isEmpty) {
-        context.stop(self)
-      }
-  }
-
-  private[this] var storageOffset = 0L
-  private[this] var storage       = Vector.empty[ByteString]
-  private[this] var stored        = 0L
-  private[this] var transferred   = 0L
-  private[this] val maxStored     = 100000000L
-  private[this] val highWatermark = maxStored * 5 / 10
-  private[this] val lowWatermark  = maxStored * 3 / 10
-  private[this] var suspended     = false
-
-  private[this] def currentOffset = storageOffset + storage.size
-
-  private[this] def buffer(data: ByteString): Unit = {
-    log.debug(s"Buffering: ${data.utf8String.trim}")
-
-    storage :+= data
-    stored += data.size
-
-    if (stored > maxStored) {
-      log.warning(s"Buffer overrun while connected to $remote")
-      context.stop(self)
-    } else if (stored > highWatermark) {
-      log.debug(s"Suspending reading at $currentOffset")
-      sender() ! SuspendReading
-      suspended = true
-    }
-  }
-
-  private[this] def acknowledge(ack: Long): Unit = {
-    require(ack == storageOffset, s"received ack $ack at $storageOffset")
-    require(storage.nonEmpty, s"storage was empty at ack $ack")
-
-    val size = storage(0).size
-    stored -= size
-    transferred += size
-
-    storageOffset += 1
-    storage = storage.drop(1)
-
-    if (suspended && stored < lowWatermark) {
-      log.debug("Resuming reading")
-      sender() ! ResumeReading
-      suspended = false
-    }
-
-    // TODO: do stuff here
-  }
 }

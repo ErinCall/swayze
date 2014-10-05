@@ -1,6 +1,7 @@
 package st.emily.swayze
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem, Props }
+import akka.event.LoggingReceive
 import com.typesafe.config.Config
 import java.net.InetSocketAddress
 
@@ -28,7 +29,7 @@ class BouncerService(system: ActorSystem, config: SwayzeConfig) extends Actor wi
     system.actorOf(ClientConnection.props(remote, service), name + "-client-connection")
   }
 
-  override def receive: Receive = {
+  override def receive: Receive = LoggingReceive {
     case _ =>
   }
 }
