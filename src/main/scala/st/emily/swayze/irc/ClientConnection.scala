@@ -35,6 +35,8 @@ class ClientConnection(remote: InetSocketAddress,
 
   context.watch(self)
 
+  private[this] var leftover: String = ""
+
   override def receive: Receive = LoggingReceive {
     case Connected(remote, local) =>
       sender() ! Register(self, keepOpenOnPeerClosed = true)
@@ -45,17 +47,28 @@ class ClientConnection(remote: InetSocketAddress,
     case Received(data) =>
       transferred += data.size
 
-      if (data.decodeString(config.encoding).trim.startsWith("PING")) {
-        send(data.decodeString(config.encoding).trim.replaceAll("PING", "PONG"))
-        send("JOIN #swayze")
+      val (lines, extra) =
+        splitOffLeftover(leftover + data.decodeString(config.encoding))
+      leftover = extra // there is likely more to come
+
+      lines.foreach { line =>
+        // XXX all of this will be gone soon
+        if (line.trim.startsWith("PING")) {
+          send(line.trim.replaceAll("PING", "PONG"))
+          send("JOIN #swayze")
+        }
+
+        println("=====> " + line)
       }
 
     case PeerClosed =>
       sender() ! Close
       context.stop(self)
 
+    case ErrorClosed =>
+
     case CommandFailed(_: Write) =>
-      context.stop(self)
+      sender() ! ResumeWriting
 
     case Terminated(self) =>
       log.error("Connection lost")
@@ -63,7 +76,15 @@ class ClientConnection(remote: InetSocketAddress,
   }
 
   def send(text: String): Unit = {
+    println("<===== " + text + "\r\n") // XXX fuck off soon
     sender() ! Write(ByteString(text + "\r\n", config.encoding))
+  }
+
+  private[this] def splitOffLeftover(text: String): (Array[String], String) = {
+    val (lines, leftover) =
+      text.linesWithSeparators.toArray.partition(_.endsWith("\r\n"))
+
+    (lines, leftover.headOption.getOrElse(""))
   }
 
   override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
