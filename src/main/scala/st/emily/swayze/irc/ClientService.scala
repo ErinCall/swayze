@@ -14,6 +14,7 @@ object ClientService {
     Props(new ClientService(config))
 }
 
+
 /**
  * Handles IRC events.
  *
