@@ -21,7 +21,7 @@ object Message extends MessageParser {
   def apply(line: String): Message = {
     val (prefix, command, parameters) = parse(line)
 
-    command.toUpperCase match {
+    command match {
       case "PRIVMSG" => Privmsg(prefix, command, parameters, false, "")
     }
   }
