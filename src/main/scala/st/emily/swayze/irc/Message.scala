@@ -4,22 +4,26 @@ import Command.Command
 import Numeric.Numeric
 
 
-abstract sealed class Message(val raw:        String,
-                              val prefix:     Option[String],
+abstract sealed class Message(val raw:        Option[String] = None,
+                              val prefix:     Option[String] = None,
                               val command:    Command,
-                              val parameters: Seq[String])
+                              val parameters: Seq[String]    = Seq()) {
+  override def toString = raw.getOrElse(
+    (Seq(prefix.getOrElse(""), command) ++ parameters).mkString(" ") + "\r\n"
+  )
+}
 
-case class Privmsg(override val raw:        String,
-                   override val prefix:     Option[String],
+case class Privmsg(override val raw:        Option[String] = None,
+                   override val prefix:     Option[String] = None,
                    override val command:    Command,
-                   override val parameters: Seq[String],
+                   override val parameters: Seq[String]    = Seq(),
                    action:                  Boolean,
                    target:                  String) extends Message(raw, prefix, command, parameters)
 
-case class Reply(override val raw:        String,
-                 override val prefix:     Option[String],
+case class Reply(override val raw:        Option[String] = None,
+                 override val prefix:     Option[String] = None,
                  override val command:    Command,
-                 override val parameters: Seq[String],
+                 override val parameters: Seq[String]    = Seq(),
                  numeric:                 Numeric) extends Message(raw, prefix, command, parameters)
 
 
@@ -28,7 +32,7 @@ object Message extends MessageParser {
     val (prefix, command, parameters) = parse(line)
 
     command match {
-      case Command.PRIVMSG => Privmsg(line, prefix, command, parameters, false, parameters(0))
+      case Command.PRIVMSG => Privmsg(Option(line), prefix, command, parameters, false, parameters(0))
     }
   }
 }
