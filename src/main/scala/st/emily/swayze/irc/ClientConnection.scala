@@ -39,16 +39,24 @@ class ClientConnection(remote:  InetSocketAddress,
 
   private[this] var leftover: String = ""
 
+  override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
+
+  override def preStart: Unit = IO(Tcp) ! Connect(remote)
+
+  override def postRestart(thr: Throwable): Unit = context.stop(self)
+
+  private[this] var transferred: Long = 0
+
+  override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
+
   override def receive: Receive = LoggingReceive {
     case Connected(remote, local) =>
       sender() ! Register(self, keepOpenOnPeerClosed = true)
 
     case Received(data) =>
       transferred += data.size
-
       val (lines, last) = partitionMessageLines(leftover + data.decodeString(config.encoding))
-      leftover = last
-
+      leftover = last.getOrElse("")
       lines.foreach { line => service ! Message(line) }
 
     case PeerClosed =>
@@ -66,11 +74,15 @@ class ClientConnection(remote:  InetSocketAddress,
   }
 
   def send(text: String): Unit = {
-    sender() ! Write(ByteString(text + "\r\n", config.encoding))
+    val data = ByteString(text + "\r\n", config.encoding)
+    transferred += data.size
+    sender() ! Write(data)
   }
 
   def send(message: Message): Unit = {
-    sender() ! Write(ByteString(message.toString + "\r\n", config.encoding))
+    val data = ByteString(message.toString + "\r\n", config.encoding)
+    transferred += data.size
+    sender() ! Write(data)
   }
 
   /**
@@ -78,19 +90,10 @@ class ClientConnection(remote:  InetSocketAddress,
    * then gets stored in the calling method and passed back in when the
    * rest of the line arrives.
    */
-  private[this] def partitionMessageLines(text: String): (Array[String], String) = {
+  private[this] def partitionMessageLines(text: String): (Array[String], Option[String]) = {
     val (lines, last) = text.linesWithSeparators.toArray.partition(_.endsWith("\r\n"))
-    (lines, last.headOption.getOrElse(""))
+    (lines, last.headOption)
   }
-
-  override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
-
-  override def preStart: Unit = IO(Tcp) ! Connect(remote)
-
-  override def postRestart(thr: Throwable): Unit = context.stop(self)
-
-  private[this] var transferred: Long = 0
-  override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
 }
 
 
