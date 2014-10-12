@@ -5,16 +5,16 @@ import akka.event.LoggingReceive
 import akka.io.{ IO, Tcp }
 import akka.util.ByteString
 import java.net.InetSocketAddress
-
-import st.emily.swayze.representation.NetworkConfiguration
 import java.security.cert.X509Certificate
 import javax.net.ssl.{ SSLContext, SSLEngine, TrustManager, X509TrustManager }
 
+import st.emily.swayze.representation.NetworkConfiguration
+
 
 object ClientConnection {
-  def props(remote: InetSocketAddress,
+  def props(remote:  InetSocketAddress,
             service: ActorRef,
-            config: NetworkConfiguration) =
+            config:  NetworkConfiguration) =
     Props(classOf[ClientConnection], remote, service, config)
 }
 
@@ -29,9 +29,9 @@ object ClientConnection {
  * @param service client service for handling IRC events
  * @param config The configuration specific to this network
  */
-class ClientConnection(remote: InetSocketAddress,
+class ClientConnection(remote:  InetSocketAddress,
                        service: ActorRef,
-                       config: NetworkConfiguration) extends Actor with ActorLogging {
+                       config:  NetworkConfiguration) extends Actor with ActorLogging {
   import Tcp._
   import context.system
 
@@ -43,24 +43,13 @@ class ClientConnection(remote: InetSocketAddress,
     case Connected(remote, local) =>
       sender() ! Register(self, keepOpenOnPeerClosed = true)
 
-      send("NICK swayze")
-      send("USER swayze swayze localhost :swayze")
-
     case Received(data) =>
       transferred += data.size
 
-      val (lines, last) = breakOutMessageLines(leftover + data.decodeString(config.encoding))
+      val (lines, last) = partitionMessageLines(leftover + data.decodeString(config.encoding))
       leftover = last
 
-      lines.foreach { line =>
-        // XXX all of this will be gone soon
-        if (line.trim.startsWith("PING")) {
-          send(line.trim.replaceAll("PING", "PONG"))
-          send("JOIN #swayze")
-        }
-
-        println("=====> " + line)
-      }
+      lines.foreach { line => service ! Message(line) }
 
     case PeerClosed =>
       sender() ! Close
@@ -77,15 +66,21 @@ class ClientConnection(remote: InetSocketAddress,
   }
 
   def send(text: String): Unit = {
-    println("<===== " + text + "\r\n") // XXX fuck off soon
     sender() ! Write(ByteString(text + "\r\n", config.encoding))
   }
 
-  private[this] def breakOutMessageLines(text: String): (Array[String], String) = {
-    val (lines, leftover) =
-      text.linesWithSeparators.toArray.partition(_.endsWith("\r\n"))
+  def send(message: Message): Unit = {
+    sender() ! Write(ByteString(message.toString + "\r\n", config.encoding))
+  }
 
-    (lines, leftover.headOption.getOrElse(""))
+  /**
+   * Last line is defined iff there's a partial line at the end. This
+   * then gets stored in the calling method and passed back in when the
+   * rest of the line arrives.
+   */
+  private[this] def partitionMessageLines(text: String): (Array[String], String) = {
+    val (lines, last) = text.linesWithSeparators.toArray.partition(_.endsWith("\r\n"))
+    (lines, last.headOption.getOrElse(""))
   }
 
   override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
@@ -94,7 +89,7 @@ class ClientConnection(remote: InetSocketAddress,
 
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
-  var transferred: Long = 0
+  private[this] var transferred: Long = 0
   override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
 }
 

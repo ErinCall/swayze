@@ -20,10 +20,9 @@ object ClientService {
  * @param config The configuration specific to this network
  */
 class ClientService(config: NetworkConfiguration) extends Actor with ActorLogging {
-  // XXX handle IrcMessage objects
-  // XXX receive connection for sending messages back
   override def receive: Receive = {
-    case message: String =>
+    case message: String => self ! Message(message)
+    case message: Message =>
     case _ =>
   }
 }
