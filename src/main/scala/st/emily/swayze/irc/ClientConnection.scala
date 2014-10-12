@@ -7,6 +7,8 @@ import akka.util.ByteString
 import java.net.InetSocketAddress
 
 import st.emily.swayze.representation.NetworkConfiguration
+import java.security.cert.X509Certificate
+import javax.net.ssl.{ SSLContext, SSLEngine, TrustManager, X509TrustManager }
 
 
 object ClientConnection {
@@ -47,9 +49,8 @@ class ClientConnection(remote: InetSocketAddress,
     case Received(data) =>
       transferred += data.size
 
-      val (lines, extra) =
-        splitOffLeftover(leftover + data.decodeString(config.encoding))
-      leftover = extra // there is likely more to come
+      val (lines, last) = breakOutMessageLines(leftover + data.decodeString(config.encoding))
+      leftover = last
 
       lines.foreach { line =>
         // XXX all of this will be gone soon
@@ -80,7 +81,7 @@ class ClientConnection(remote: InetSocketAddress,
     sender() ! Write(ByteString(text + "\r\n", config.encoding))
   }
 
-  private[this] def splitOffLeftover(text: String): (Array[String], String) = {
+  private[this] def breakOutMessageLines(text: String): (Array[String], String) = {
     val (lines, leftover) =
       text.linesWithSeparators.toArray.partition(_.endsWith("\r\n"))
 
@@ -95,4 +96,22 @@ class ClientConnection(remote: InetSocketAddress,
 
   var transferred: Long = 0
   override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
+}
+
+
+object SslEngineBuilder {
+  def getTrustingEngine(host: String, port: Int): SSLEngine = {
+    val tlsContext = SSLContext.getInstance("TLSv1.1")
+
+    val trustManagers: Array[TrustManager] = Array(new X509TrustManager {
+      def checkClientTrusted(arg0: Array[X509Certificate], arg1: String): Unit = ()
+      def checkServerTrusted(arg0: Array[X509Certificate], arg1: String): Unit = ()
+      def getAcceptedIssuers(): Array[X509Certificate] = Array()
+    })
+
+    tlsContext.init(null, trustManagers, null)
+    val engine = tlsContext.createSSLEngine(host, port)
+    engine.setUseClientMode(true)
+    engine
+  }
 }
