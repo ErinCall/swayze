@@ -4,6 +4,9 @@ package st.emily.swayze.irc
 object Command extends Enumeration {
   type Command = Value
 
+  val REPLY    = Value  // internal command
+  val UNKNOWN  = Value  // internal command
+
   val AWAY     = Value
   val CONNECT  = Value
   val DIE      = Value
@@ -18,7 +21,6 @@ object Command extends Enumeration {
   val MOTD     = Value
   val NAMES    = Value
   val NOTICE   = Value
-  val NUMERIC  = Value  // internal command
   val OPER     = Value
   val PART     = Value
   val PASS     = Value
@@ -37,7 +39,6 @@ object Command extends Enumeration {
   val TIME     = Value
   val TOPIC    = Value
   val TRACE    = Value
-  val UNKNOWN  = Value  // internal command
   val USER     = Value
   val USERHOST = Value
   val USERS    = Value
