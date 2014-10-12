@@ -80,7 +80,7 @@ class ClientConnection(remote:  InetSocketAddress,
   }
 
   def send(message: Message): Unit = {
-    val data = ByteString(message.toString + "\r\n", config.encoding)
+    val data = ByteString(message.toString, config.encoding)
     transferred += data.size
     sender() ! Write(data)
   }
@@ -89,9 +89,12 @@ class ClientConnection(remote:  InetSocketAddress,
    * Last line is defined iff there's a partial line at the end. This
    * then gets stored in the calling method and passed back in when the
    * rest of the line arrives.
+   *
+   * Using raw Unicode characters here to ensure I split in an encoding-
+   * agnostic way.
    */
   private[this] def partitionMessageLines(text: String): (Array[String], Option[String]) = {
-    val (lines, last) = text.linesWithSeparators.toArray.partition(_.endsWith("\r\n"))
+    val (lines, last) = text.split("\u000D\u000A").toArray.partition(_.endsWith("\u000D\u000A"))
     (lines, last.headOption)
   }
 }
