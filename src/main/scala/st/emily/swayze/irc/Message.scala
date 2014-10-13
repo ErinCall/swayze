@@ -1,7 +1,8 @@
 package st.emily.swayze.irc
 
+import scala.util.{ Failure, Success, Try }
+
 import Command.Command
-import Numeric.Numeric
 
 
 abstract sealed class Message(val raw:        Option[String] = None,
@@ -24,12 +25,12 @@ case class Reply(override val raw:        Option[String] = None,
                  override val prefix:     Option[String] = None,
                  override val command:    Command,
                  override val parameters: Seq[String]    = Seq(),
-                 numeric:                 Numeric) extends Message(raw, prefix, command, parameters)
+                 numeric:                 String) extends Message(raw, prefix, command, parameters)
 
 
 object Message extends MessageParser {
   def apply(line: String): Message = {
-    val (prefix, command, parameters) = parse(line)
+    val (prefix, command, numeric, parameters) = parse(line)
 
     command match {
       case Command.PRIVMSG => Privmsg(Option(line), prefix, command, parameters, false, parameters(0))
@@ -48,24 +49,29 @@ object Message extends MessageParser {
  * @see http://tools.ietf.org/html/rfc2812#section-2.3.1
  */
 trait MessageParser {
-  def parse(text: String): (Option[String], Command, Seq[String]) = {
+  def parse(text: String): (Option[String], Command, Option[String], Seq[String]) = {
     val tokens = text.split("\u0020").map(_.trim)
 
     val prefix = tokens(0)(0) match {
       case ':' => Option(tokens(0))
-      case _   => None
+      case _ => None
     }
 
+    val commandOrReply = tokens(if (prefix.isDefined) 1 else 0).toUpperCase
     val command =
-      try {
-        Command.withName(tokens(if (prefix.isDefined) 1 else 0).toUpperCase)
-      } catch {
-        case e => Command.UNKNOWN
+      Try(Command.withName(commandOrReply)) match {
+        case Success(command) => command
+        case Failure(_) =>
+          Try(commandOrReply.toInt) match {
+            case Success(_) => Command.REPLY
+            case Failure(_) => Command.UNKNOWN
+          }
       }
 
+    val numeric = if (command == Command.REPLY) Option(commandOrReply) else None
     val params = tokens.drop(if (prefix.isDefined) 2 else 1).takeWhile(!_.startsWith(":"))
     val trailing = text.split("\u0020:").lastOption.map(_.trim)
 
-    (prefix, command, params ++ trailing)
+    (prefix, command, numeric, params ++ trailing)
   }
 }
