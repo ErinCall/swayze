@@ -39,16 +39,20 @@ object Message extends MessageParser {
 }
 
 
-/**
- * Parses a message into its parts hewing as close to the intentions of
- * RFC2812 as possible. This includes paying close attention to the
- * actual octets included in the message. This is probably overly
- * cautious if anything; by this point, the string has been decoded
- * using the configured encoding.
- *
- * @see http://tools.ietf.org/html/rfc2812#section-2.3.1
- */
 trait MessageParser {
+  /**
+   * Breaks a raw IRC message string into parts ready for a Message
+   * constructor.
+   *
+   * @param text Raw IRC message string, optionally with linebreak
+   *   remaining at the end.
+   *
+   * @returns A four-tupe with an optional prefix as a string, a
+   *   command, an optional numeric code as a string received in the
+   *   message, and a sequence of parameters as strings.
+   *
+   * @see http://tools.ietf.org/html/rfc2812#section-2.3.1
+   */
   def parse(text: String): (Option[String], Command, Option[String], Seq[String]) = {
     val tokens = text.split("\u0020").map(_.trim)
 
