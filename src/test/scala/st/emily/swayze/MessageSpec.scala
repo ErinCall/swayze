@@ -18,5 +18,14 @@ class MessageSpec extends Spec {
                               action     = false,
                               target     = "target")))
     }
+
+    @Test def `Parses REPLY` = {
+      val message = Message(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n")
+      message.must(be(Reply(raw        = Option(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n"),
+                            prefix     = Option(":irc.host"),
+                            command    = Command.REPLY,
+                            parameters = Seq("someone", "#channel", "user", "0.0.0.0", "irc.host", "someone", "G", "0 Real Name"),
+                            numeric    = "352")))
+    }
   }
 }

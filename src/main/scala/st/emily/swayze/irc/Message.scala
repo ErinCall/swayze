@@ -34,6 +34,7 @@ object Message extends MessageParser {
 
     command match {
       case Command.PRIVMSG => Privmsg(Option(line), prefix, command, parameters, false, parameters(0))
+      case Command.REPLY   => Reply(Option(line), prefix, command, parameters, numeric.get)
     }
   }
 }
