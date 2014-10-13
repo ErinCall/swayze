@@ -9,6 +9,7 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.{ SSLContext, SSLEngine, TrustManager, X509TrustManager }
 
 import st.emily.swayze.representation.NetworkConfiguration
+import st.emily.swayze.irc.{ Message => IrcMessage }
 
 
 object ClientConnection {
@@ -57,7 +58,7 @@ class ClientConnection(remote:  InetSocketAddress,
       transferred += data.size
       val (lines, last) = partitionMessageLines(leftover + data.decodeString(config.encoding))
       leftover = last.getOrElse("")
-      lines.foreach { line => service ! Message(line) }
+      lines.foreach { line => service ! IrcMessage(line) }
 
     case PeerClosed =>
       sender() ! Close
@@ -79,8 +80,8 @@ class ClientConnection(remote:  InetSocketAddress,
     sender() ! Write(data)
   }
 
-  def send(message: Message): Unit = {
-    val data = ByteString(message.toString, config.encoding)
+  def send(message: IrcMessage): Unit = {
+    val data = ByteString(message.toRaw, config.encoding)
     transferred += data.size
     sender() ! Write(data)
   }
