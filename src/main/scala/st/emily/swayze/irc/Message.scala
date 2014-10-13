@@ -62,11 +62,15 @@ trait MessageParser {
     }
 
     val commandOrReply = tokens(if (prefix.isDefined) 1 else 0).toUpperCase
-    val command = Try(Command.withName(commandOrReply)) match {
-                    case Success(command) => command
-                    case Failure(_)       => Try(commandOrReply.toInt) match {
-                                               case Success(_) => Command.REPLY
-                                               case Failure(_) => Command.UNKNOWN }}
+    val command =
+      Try(Command.withName(commandOrReply)) match {
+        case Success(command) => command
+        case Failure(_)       =>
+          Try(commandOrReply.toInt) match {
+            case Success(_) => Command.REPLY
+            case Failure(_) => Command.UNKNOWN
+          }
+      }
 
     val numeric = if (command == Command.REPLY) Option(commandOrReply) else None
     val params = tokens.drop(if (prefix.isDefined) 2 else 1).takeWhile(!_.startsWith(":"))
