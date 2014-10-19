@@ -4,7 +4,7 @@ package st.emily.swayze.irc
 object Numeric extends Enumeration {
   type Numeric = Value
 
-  val NONSTANDARD           = Value(0)
+  val UNKNOWN               = Value
 
   val RPL_WELCOME           = Value("001")
   val RPL_YOURHOST          = Value("002")

@@ -9,7 +9,8 @@ case class NetworkConfiguration(name:     String,
                                 port:     Int,
                                 encoding: String,
                                 channels: Seq[String],
-                                modules:  Seq[String]) {
+                                modules:  Seq[String],
+                                nickname: String) {
 
   /**
    * Get a version of the network name safe to use in the name of the

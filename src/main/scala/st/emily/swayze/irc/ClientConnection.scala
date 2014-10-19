@@ -47,12 +47,22 @@ class ClientConnection(remote:  InetSocketAddress,
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
   private[this] var transferred: Long = 0
+  private[this] var connection: Option[ActorRef] = None
+  private[this] var writesSent: Long = 0
+  private[this] var writesAcked: Long = 0
 
-  override def postStop: Unit = log.info(s"Transferred $transferred bytes from/to [$remote]")
+  override def postStop: Unit = {
+    log.info(s"Transferred $transferred bytes from/to [$remote]")
+    log.info(s"Wrote $writesSent times, acked $writesAcked writes")
+  }
+
+  case class Ack(id: Long) extends Event
 
   override def receive: Receive = LoggingReceive {
     case Connected(remote, local) =>
-      sender() ! Register(self, keepOpenOnPeerClosed = true)
+      connection = Option(sender())
+      connection.get ! Register(self)
+      service ! Ready
 
     case Received(data) =>
       transferred += data.size
@@ -60,14 +70,24 @@ class ClientConnection(remote:  InetSocketAddress,
       leftover = last.getOrElse("")
       lines.foreach { line => service ! IrcMessage(line) }
 
+    case message: IrcMessage =>
+      send(message)
+
+    case message: String =>
+      send(message)
+
+    case Ack(id) =>
+      writesAcked += 1
+      log.debug(s"Acked writing $id")
+
     case PeerClosed =>
-      sender() ! Close
+      connection.get ! Close
       context.stop(self)
 
     case ErrorClosed =>
 
     case CommandFailed(_: Write) =>
-      sender() ! ResumeWriting
+      connection.get ! ResumeWriting
 
     case Terminated(self) =>
       log.error("Connection lost")
@@ -77,13 +97,15 @@ class ClientConnection(remote:  InetSocketAddress,
   def send(text: String): Unit = {
     val data = ByteString(text + "\r\n", config.encoding)
     transferred += data.size
-    sender() ! Write(data)
+    writesSent += 1
+    connection.get ! Write(data, Ack(writesSent))
   }
 
   def send(message: IrcMessage): Unit = {
     val data = ByteString(message.toRawMessageString, config.encoding)
     transferred += data.size
-    sender() ! Write(data)
+    writesSent += 1
+    connection.get ! Write(data, Ack(writesSent))
   }
 
   /**
@@ -95,7 +117,7 @@ class ClientConnection(remote:  InetSocketAddress,
    * agnostic way.
    */
   private[this] def partitionMessageLines(text: String): (Array[String], Option[String]) = {
-    val (lines, last) = text.split("\u000D\u000A").toArray.partition(_.endsWith("\u000D\u000A"))
+    val (lines, last) = text.split("\u000D\u000A").toArray.partition(!_.endsWith("\u000D\u000A"))
     (lines, last.headOption)
   }
 }

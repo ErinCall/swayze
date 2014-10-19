@@ -76,8 +76,16 @@ case class Message(raw:        Option[String]  = None,
 object Message {
   def apply(line: String): Message = {
     val (prefix, command, numeric, parameters) = fromRawMessageString(line)
-    new Message(Option(line), prefix, command, numeric, parameters)
+    Message(raw        = Option(line),
+            prefix     = prefix,
+            command    = command,
+            numeric    = numeric,
+            parameters = parameters)
   }
+
+  def apply(command: Command, parameters: String*): Message =
+    Message(command = Option(command),
+            parameters = parameters)
 
   /**
    * Breaks a raw IRC message string into parts ready for a Message
@@ -103,7 +111,12 @@ object Message {
                            case Success(command) => Option(command)
                            case Failure(_) => None
                          }
-    val numeric        = if (!command.isDefined) Option(Numeric.withName(commandOrReply)) else None
+    val numeric        = if (!command.isDefined) {
+                           Try(Numeric.withName(commandOrReply)) match {
+                             case Success(numeric) => Option(numeric)
+                             case Failure(_) => Option(Numeric.UNKNOWN)
+                           }
+                         } else None
     val params         = tokens.drop(if (prefix.isDefined) 2 else 1).takeWhile(!_.startsWith(":"))
     val trailing       = text.split(":", 3).lastOption.map(_.stripLineEnd)
 

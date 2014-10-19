@@ -12,7 +12,8 @@ class RepresentationSpec extends Spec {
                                         port     = 6667,
                                         encoding = "UTF-8",
                                         channels = List(),
-                                        modules  = List())
+                                        modules  = List(),
+                                        nickname = "nick")
 
       config.uriSafeName.must(be("some-network"))
     }

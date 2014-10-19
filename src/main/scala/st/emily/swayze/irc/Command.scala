@@ -19,6 +19,7 @@ object Command extends Enumeration {
   val LINKS    = Value
   val LIST     = Value
   val MOTD     = Value
+  val NICK     = Value
   val NAMES    = Value
   val NOTICE   = Value
   val OPER     = Value

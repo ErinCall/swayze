@@ -19,6 +19,7 @@ object SwayzeApp extends App {
                          encoding = UTF-8
                          channels = [ "#parlour" ]
                          modules  = []
+                         nickname = "swayze"
                        }
                      ]
                    }
