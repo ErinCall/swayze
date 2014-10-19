@@ -94,7 +94,7 @@ object Message {
    * @param text Raw IRC message string, optionally with linebreak
    *   remaining at the end.
    *
-   * @returns A four-tuple with an optional prefix as a string, a
+   * @return A four-tuple with an optional prefix as a string, a
    *   command, an optional numeric code as a string received in the
    *   message, and a sequence of parameters as strings.
    *
