@@ -20,7 +20,7 @@ case class Message(raw:        Option[String],
                    command:    Option[Command],
                    numeric:    Option[Numeric],
                    parameters: Seq[String]) {
-  def toRaw = raw.getOrElse {
+  def toRawMessageString = raw.getOrElse {
     (Seq(prefix.getOrElse(""), command.getOrElse(numeric.get.id)) ++ parameters).mkString("\u0020") + "\r\n"
   }
 
@@ -55,7 +55,7 @@ case class Message(raw:        Option[String],
 
 object Message {
   def apply(line: String): Message = {
-    val (prefix, command, numeric, parameters) = parse(line)
+    val (prefix, command, numeric, parameters) = fromRawMessageString(line)
     new Message(Option(line), prefix, command, numeric, parameters)
   }
 
@@ -72,7 +72,7 @@ object Message {
    *
    * @see http://tools.ietf.org/html/rfc2812#section-2.3.1
    */
-  def parse(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
+  def fromRawMessageString(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
     val tokens         = text.split("\u0020").map(_.trim)
     val prefix         = tokens(0)(0) match {
                            case ':' => Option(tokens(0))
