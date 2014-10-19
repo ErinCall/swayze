@@ -7,13 +7,14 @@ import java.net.InetSocketAddress
 import scala.util.matching.Regex
 
 import st.emily.swayze.representation.NetworkConfiguration
+import Command.Command
+import Numeric.Numeric
 
 
 object ClientService {
   def props(config: NetworkConfiguration): Props =
     Props(new ClientService(config))
 }
-
 
 /**
  * Handles IRC events.
@@ -22,8 +23,10 @@ object ClientService {
  */
 class ClientService(config: NetworkConfiguration) extends Actor with ActorLogging {
   override def receive: Receive = {
+    case message: Message if message.command == Option(Command.PING) =>
+      sender() ! Message(command    = Option(Command.PONG),
+                         parameters = Seq(message.pingValue.getOrElse("")))
     case message: String => self ! Message(message)
-    case message: Message =>
     case _ =>
   }
 }

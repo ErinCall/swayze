@@ -13,15 +13,29 @@ import Numeric.Numeric
  * but it's going to be a pain, and I'd like to move on for now. That's
  * why there are a bunch of methods which do specific things for
  * specific kinds of commands. Lots of match statements that I can get
- * rid of eventually.
+ * rid of eventually. I know it's awful.
  */
-case class Message(raw:        Option[String],
-                   prefix:     Option[String],
-                   command:    Option[Command],
-                   numeric:    Option[Numeric],
-                   parameters: Seq[String]) {
-  def toRawMessageString = raw.getOrElse {
-    (Seq(prefix.getOrElse(""), command.getOrElse(numeric.get.id)) ++ parameters).mkString("\u0020") + "\r\n"
+case class Message(raw:        Option[String]  = None,
+                   prefix:     Option[String]  = None,
+                   command:    Option[Command] = None,
+                   numeric:    Option[Numeric] = None,
+                   parameters: Seq[String]     = Seq()) {
+  def toRawMessageString = {
+    raw match {
+      case Some(text) => text
+      case None =>
+        val rawMessage = new scala.collection.mutable.StringBuilder(510)
+        if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
+        rawMessage.append(command.getOrElse(numeric.get.id))
+
+        // last parameter is the "trailing" one and starts with a colon
+        parameters.zipWithIndex.foreach { case (parameter, i) =>
+          val trailing = if (i == parameters.length - 1) ":" else ""
+          rawMessage.append("\u0020" + trailing + parameter)
+        }
+
+        rawMessage.toString + "\r\n"
+    }
   }
 
   def action: Boolean = {
@@ -38,8 +52,7 @@ case class Message(raw:        Option[String],
 
   def target: Option[String] = {
     command match {
-      case Some(Command.PRIVMSG) =>
-        Option(parameters(0))
+      case Some(Command.PRIVMSG) => Option(parameters(0))
       case _ => None
     }
   }
@@ -48,6 +61,13 @@ case class Message(raw:        Option[String],
     command match {
       case Some(Command.PRIVMSG) =>
         Option(if (action) parameters(1).slice(8, parameters(1).length - 1) else parameters(1))
+      case _ => None
+    }
+  }
+
+  def pingValue: Option[String] = {
+    command match {
+      case Some(Command.PING) => Option(parameters(0))
       case _ => None
     }
   }
@@ -76,12 +96,12 @@ object Message {
     val tokens         = text.split("\u0020").map(_.trim)
     val prefix         = tokens(0)(0) match {
                            case ':' => Option(tokens(0))
-                           case _   => None
+                           case _ => None
                          }
     val commandOrReply = tokens(if (prefix.isDefined) 1 else 0).toUpperCase
     val command        = Try(Command.withName(commandOrReply)) match {
                            case Success(command) => Option(command)
-                           case Failure(_)       => None
+                           case Failure(_) => None
                          }
     val numeric        = if (!command.isDefined) Option(Numeric.withName(commandOrReply)) else None
     val params         = tokens.drop(if (prefix.isDefined) 2 else 1).takeWhile(!_.startsWith(":"))

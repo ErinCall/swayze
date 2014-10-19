@@ -8,7 +8,7 @@ import org.junit.Test
 
 
 class MessageSpec extends Spec {
-  class `MessageParser` {
+  class `Parsing tests` {
     @Test def `Parses PRIVMSG` = {
       val message = Message(":nick!ident@host.name PRIVMSG target :This is a message\r\n")
 
@@ -45,6 +45,7 @@ class MessageSpec extends Spec {
                               command    = Option(Command.PRIVMSG),
                               parameters = Seq("target", "\t This is a message "),
                               numeric    = None)))
+
       message.action.must(be(false))
       message.target.must(be(Option("target")))
       message.contents.must(be(Option("\t This is a message ")))
@@ -58,6 +59,7 @@ class MessageSpec extends Spec {
                               command    = Option(Command.PRIVMSG),
                               parameters = Seq("target", "\u0001ACTION emotes\u0001"),
                               numeric    = None)))
+
       message.action.must(be(true))
       message.target.must(be(Option("target")))
       message.contents.must(be(Option("emotes")))
@@ -81,6 +83,23 @@ class MessageSpec extends Spec {
                               command    = Option(Command.PING),
                               parameters = Seq("8C4EF037"),
                               numeric    = None)))
+
+      message.pingValue.must(be(Option("8C4EF037")))
+    }
+  }
+
+  class `Construction tests` {
+    @Test def `Creates legal PONG message` = {
+      val message = Message(command    = Option(Command.PONG),
+                            parameters = Seq("8C4EF037"))
+
+      message.must(be(Message(raw        = None,
+                              prefix     = None,
+                              command    = Option(Command.PONG),
+                              parameters = Seq("8C4EF037"),
+                              numeric    = None)))
+
+      message.toRawMessageString.must(be("PONG :8C4EF037\r\n"))
     }
   }
 }
