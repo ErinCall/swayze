@@ -30,7 +30,7 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
       sender() ! Message(Command.USER, config.nickname, config.nickname, "*", config.nickname)
 
     case message: Message if message.command == Option(Command.PING) =>
-      sender() ! Message(Command.PONG, message.pingValue.getOrElse(""))
+      sender() ! Message(Command.PONG, message.pingValue.getOrElse(config.host))
 
     case message: Message if message.numeric == Option(Numeric.RPL_WELCOME) =>
       config.channels.foreach(sender() ! Message(Command.JOIN, _))
