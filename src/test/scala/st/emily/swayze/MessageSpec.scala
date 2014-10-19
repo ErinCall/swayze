@@ -88,16 +88,10 @@ class MessageSpec extends Spec {
     }
   }
 
-  class `Construction tests` {
+  class `Raw string tests` {
     @Test def `Creates legal PONG message` = {
       val message = Message(command    = Option(Command.PONG),
                             parameters = Seq("8C4EF037"))
-
-      message.must(be(Message(raw        = None,
-                              prefix     = None,
-                              command    = Option(Command.PONG),
-                              parameters = Seq("8C4EF037"),
-                              numeric    = None)))
 
       message.toRawMessageString.must(be("PONG :8C4EF037\r\n"))
     }
