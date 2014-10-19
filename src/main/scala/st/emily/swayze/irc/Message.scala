@@ -24,7 +24,7 @@ case class Message(raw:        Option[String]  = None,
     raw match {
       case Some(text) => text
       case None =>
-        val rawMessage = new scala.collection.mutable.StringBuilder(510)
+        val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
         if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
         rawMessage.append(command.getOrElse(numeric.get.id))
 
