@@ -72,5 +72,15 @@ class MessageSpec extends Spec {
                               parameters = Seq("someone", "#channel", "user", "0.0.0.0", "irc.host", "someone", "G", "0 Real Name"),
                               numeric    = Option(Numeric.withName("352")))))
     }
+
+    @Test def `Parses PING` = {
+      val message = Message("PING :8C4EF037\r\n")
+
+      message.must(be(Message(raw        = Option("PING :8C4EF037\r\n"),
+                              prefix     = None,
+                              command    = Option(Command.PING),
+                              parameters = Seq("8C4EF037"),
+                              numeric    = None)))
+    }
   }
 }
