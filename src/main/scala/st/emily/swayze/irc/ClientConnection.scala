@@ -13,10 +13,10 @@ import st.emily.swayze.irc.{ Message => IrcMessage }
 
 
 object ClientConnection {
-  def props(remote:  InetSocketAddress,
-            service: ActorRef,
-            config:  NetworkConfiguration) =
-    Props(classOf[ClientConnection], remote, service, config)
+  def props(remote:   InetSocketAddress,
+            service:  ActorRef,
+            encoding: String) =
+    Props(classOf[ClientConnection], remote, service, encoding)
 }
 
 
@@ -28,11 +28,11 @@ object ClientConnection {
  *
  * @param remote the server's info for connecting (a host and port)
  * @param service client service for handling IRC events
- * @param config The configuration specific to this network
+ * @param encoding The byte encoding to use to translate bytes to and from strings
  */
-class ClientConnection(remote:  InetSocketAddress,
-                       service: ActorRef,
-                       config:  NetworkConfiguration) extends Actor with ActorLogging {
+class ClientConnection(remote:   InetSocketAddress,
+                       service:  ActorRef,
+                       encoding: String) extends Actor with ActorLogging {
   import Tcp._
   import context.system
 
@@ -68,10 +68,11 @@ class ClientConnection(remote:  InetSocketAddress,
       service ! Ready
 
     case Received(data) =>
+      log.debug(s"\n\n===========> ${data.utf8String}")
       readsReceived += 1
       transferred += data.size
 
-      val (lines, last) = partitionMessageLines(leftover + data.decodeString(config.encoding))
+      val (lines, last) = partitionMessageLines(leftover + data.decodeString(encoding))
       leftover = last.getOrElse("")
       lines.foreach { line => service ! IrcMessage(line) }
 
@@ -99,17 +100,19 @@ class ClientConnection(remote:  InetSocketAddress,
   }
 
   def send(text: String): Unit = {
-    val data = ByteString(text + "\r\n", config.encoding)
+    val data = ByteString(text + "\r\n", encoding)
     transferred += data.size
     writesSent += 1
     tcp ! Write(data, Ack(writesSent))
   }
 
   def send(message: IrcMessage): Unit = {
-    val data = ByteString(message.toRawMessageString, config.encoding)
+    val data = ByteString(message.toRawMessageString, encoding)
     transferred += data.size
     writesSent += 1
     tcp ! Write(data, Ack(writesSent))
+
+    log.debug(s"\n\n<=========== ${data.utf8String}")
   }
 
   /**

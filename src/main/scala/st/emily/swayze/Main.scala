@@ -17,7 +17,16 @@ object SwayzeApp extends App {
                          host     = irc.emily.st
                          port     = 6667
                          encoding = UTF-8
-                         channels = [ "#parlour" ]
+                         channels = [ "#parlour", "#swayze" ]
+                         modules  = []
+                         nickname = "swayze"
+                       }
+                       {
+                         name     = Freenode
+                         host     = irc.freenode.net
+                         port     = 6667
+                         encoding = UTF-8
+                         channels = [ "#swayze" ]
                          modules  = []
                          nickname = "swayze"
                        }

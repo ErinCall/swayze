@@ -7,15 +7,12 @@ import java.net.InetSocketAddress
 import scala.util.matching.Regex
 
 import st.emily.swayze.representation.NetworkConfiguration
-import Command.Command
-import Numeric.Numeric
 
 
 case object Ready
 
 object ClientService {
-  def props(config: NetworkConfiguration): Props =
-    Props(new ClientService(config))
+  def props(config: NetworkConfiguration): Props = Props(new ClientService(config))
 }
 
 /**
