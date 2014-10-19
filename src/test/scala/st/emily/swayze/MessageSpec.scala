@@ -19,8 +19,8 @@ class MessageSpec extends Spec {
                               numeric    = None)))
 
       message.action.must(be(false))
-      message.target.must(be("target"))
-      message.contents.must(be("This is a message"))
+      message.target.must(be(Option("target")))
+      message.contents.must(be(Option("This is a message")))
     }
 
     @Test def `Parses PRIVMSG with a colon in the message` = {
@@ -33,8 +33,8 @@ class MessageSpec extends Spec {
                               numeric    = None)))
 
       message.action.must(be(false))
-      message.target.must(be("target"))
-      message.contents.must(be("This is a : message"))
+      message.target.must(be(Option("target")))
+      message.contents.must(be(Option("This is a : message")))
     }
 
     @Test def `Parses PRIVMSG keeping whitespace` = {
@@ -46,8 +46,21 @@ class MessageSpec extends Spec {
                               parameters = Seq("target", "\t This is a message "),
                               numeric    = None)))
       message.action.must(be(false))
-      message.target.must(be("target"))
-      message.contents.must(be("\t This is a message "))
+      message.target.must(be(Option("target")))
+      message.contents.must(be(Option("\t This is a message ")))
+    }
+
+    @Test def `Parses PRIVMSG which contains an action` = {
+      val message = Message(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n")
+
+      message.must(be(Message(raw        = Option(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n"),
+                              prefix     = Option(":nick!ident@host.name"),
+                              command    = Option(Command.PRIVMSG),
+                              parameters = Seq("target", "\u0001ACTION emotes\u0001"),
+                              numeric    = None)))
+      message.action.must(be(true))
+      message.target.must(be(Option("target")))
+      message.contents.must(be(Option("emotes")))
     }
 
     @Test def `Parses REPLY` = {

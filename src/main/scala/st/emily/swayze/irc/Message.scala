@@ -9,9 +9,11 @@ import Numeric.Numeric
 /**
  * This type represents the contents of a single IRC event.
  *
- * I'd like to break this into many types, one for each kind of
- * message, but it's going to be a pain, and I'd like to move on for
- * now.
+ * I'd like to break this into many types, one for each kind of message,
+ * but it's going to be a pain, and I'd like to move on for now. That's
+ * why there are a bunch of methods which do specific things for
+ * specific kinds of commands. Lots of match statements that I can get
+ * rid of eventually.
  */
 case class Message(raw:        Option[String],
                    prefix:     Option[String],
@@ -22,9 +24,33 @@ case class Message(raw:        Option[String],
     (Seq(prefix.getOrElse(""), command.getOrElse(numeric.get.id)) ++ parameters).mkString("\u0020") + "\r\n"
   }
 
-  def action:   Boolean = false
-  def target:   String  = parameters(0)
-  def contents: String  = parameters(1)
+  def action: Boolean = {
+    command match {
+      case Some(Command.PRIVMSG) =>
+        val text = parameters(1)
+        if (text.startsWith("\u0001ACTION") && text.endsWith("\u0001"))
+          true
+        else
+          false
+      case _ => false
+    }
+  }
+
+  def target: Option[String] = {
+    command match {
+      case Some(Command.PRIVMSG) =>
+        Option(parameters(0))
+      case _ => None
+    }
+  }
+
+  def contents: Option[String] = {
+    command match {
+      case Some(Command.PRIVMSG) =>
+        Option(if (action) parameters(1).slice(8, parameters(1).length - 1) else parameters(1))
+      case _ => None
+    }
+  }
 }
 
 object Message {
