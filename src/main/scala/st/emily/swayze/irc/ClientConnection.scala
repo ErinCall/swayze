@@ -38,34 +38,39 @@ class ClientConnection(remote:  InetSocketAddress,
 
   context.watch(self)
 
-  private[this] var leftover: String = ""
-
   override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
   override def preStart: Unit = IO(Tcp) ! Connect(remote)
 
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
-  private[this] var transferred: Long = 0
-  private[this] var connection: Option[ActorRef] = None
-  private[this] var writesSent: Long = 0
-  private[this] var writesAcked: Long = 0
+  private[this] var leftover:      String   = ""
+  private[this] var tcp:           ActorRef = null
+
+  private[this] var transferred:   Long     = 0
+  private[this] var readsReceived: Long     = 0
+  private[this] var writesSent:    Long     = 0
+  private[this] var writesAcked:   Long     = 0
 
   override def postStop: Unit = {
     log.info(s"Transferred $transferred bytes from/to [$remote]")
-    log.info(s"Wrote $writesSent times, acked $writesAcked writes")
+    log.info(s"Handled $readsReceived receive events")
+    log.info(s"Sent $writesSent write events")
+    log.info(s"Received $writesAcked write acknowledgements")
   }
 
   case class Ack(id: Long) extends Event
 
   override def receive: Receive = LoggingReceive {
     case Connected(remote, local) =>
-      connection = Option(sender())
-      connection.get ! Register(self)
+      tcp = sender()
+      tcp ! Register(self)
       service ! Ready
 
     case Received(data) =>
+      readsReceived += 1
       transferred += data.size
+
       val (lines, last) = partitionMessageLines(leftover + data.decodeString(config.encoding))
       leftover = last.getOrElse("")
       lines.foreach { line => service ! IrcMessage(line) }
@@ -78,16 +83,15 @@ class ClientConnection(remote:  InetSocketAddress,
 
     case Ack(id) =>
       writesAcked += 1
-      log.debug(s"Acked writing $id")
 
     case PeerClosed =>
-      connection.get ! Close
+      tcp ! Close
       context.stop(self)
 
     case ErrorClosed =>
 
     case CommandFailed(_: Write) =>
-      connection.get ! ResumeWriting
+      tcp ! ResumeWriting
 
     case Terminated(self) =>
       log.error("Connection lost")
@@ -98,14 +102,14 @@ class ClientConnection(remote:  InetSocketAddress,
     val data = ByteString(text + "\r\n", config.encoding)
     transferred += data.size
     writesSent += 1
-    connection.get ! Write(data, Ack(writesSent))
+    tcp ! Write(data, Ack(writesSent))
   }
 
   def send(message: IrcMessage): Unit = {
     val data = ByteString(message.toRawMessageString, config.encoding)
     transferred += data.size
     writesSent += 1
-    connection.get ! Write(data, Ack(writesSent))
+    tcp ! Write(data, Ack(writesSent))
   }
 
   /**
