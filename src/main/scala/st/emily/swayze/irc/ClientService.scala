@@ -34,7 +34,5 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
 
     case message: Message if message.numeric == Option(Numeric.RPL_WELCOME) =>
       config.channels.foreach(sender() ! Message(Command.JOIN, _))
-
-    case _ =>
   }
 }
