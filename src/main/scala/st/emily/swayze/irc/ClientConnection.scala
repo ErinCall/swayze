@@ -68,7 +68,6 @@ class ClientConnection(remote:   InetSocketAddress,
       service ! Ready
 
     case Received(data) =>
-      log.debug(s"\n\n===========> ${data.utf8String}")
       readsReceived += 1
       transferred += data.size
 
@@ -111,8 +110,6 @@ class ClientConnection(remote:   InetSocketAddress,
     transferred += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))
-
-    log.debug(s"\n\n<=========== ${data.utf8String}")
   }
 
   /**
