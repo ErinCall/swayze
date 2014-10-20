@@ -36,8 +36,7 @@ case class Message(raw:        Option[String]  = None,
 
   lazy val action: Boolean = command match {
     case Some(Command.PRIVMSG) =>
-      val text = parameters(1)
-      if (text.startsWith("\u0001ACTION") && text.endsWith("\u0001")) true else false
+      if (parameters(1).startsWith("\u0001ACTION")) true else false
     case _ => false
   }
 
