@@ -20,54 +20,41 @@ case class Message(raw:        Option[String]  = None,
                    command:    Option[Command] = None,
                    numeric:    Option[Numeric] = None,
                    parameters: Seq[String]     = Seq()) {
-  def toRawMessageString = {
-    raw.getOrElse {
-      val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
-      if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
-      rawMessage.append(command.getOrElse(numeric.get.id))
+  lazy val toRawMessageString = raw.getOrElse {
+    val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
+    if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
+    rawMessage.append(command.getOrElse(numeric.get.id))
 
-      // last parameter is the "trailing" one and starts with a colon
-      parameters.zipWithIndex.foreach { case (parameter, i) =>
-        val trailing = if (i == parameters.length - 1) ":" else ""
-        rawMessage.append("\u0020" + trailing + parameter)
-      }
-
-      rawMessage.toString + "\r\n"
+    // last parameter is the "trailing" one and starts with a colon
+    parameters.zipWithIndex.foreach { case (parameter, i) =>
+      val trailing = if (i == parameters.length - 1) ":" else ""
+      rawMessage.append("\u0020" + trailing + parameter)
     }
+
+    rawMessage.toString + "\r\n"
   }
 
-  def action: Boolean = {
-    command match {
-      case Some(Command.PRIVMSG) =>
-        val text = parameters(1)
-        if (text.startsWith("\u0001ACTION") && text.endsWith("\u0001"))
-          true
-        else
-          false
-      case _ => false
-    }
+  lazy val action: Boolean = command match {
+    case Some(Command.PRIVMSG) =>
+      val text = parameters(1)
+      if (text.startsWith("\u0001ACTION") && text.endsWith("\u0001")) true else false
+    case _ => false
   }
 
-  def target: Option[String] = {
-    command match {
-      case Some(Command.PRIVMSG) => Option(parameters(0))
-      case _ => None
-    }
+  lazy val target: Option[String] = command match {
+    case Some(Command.PRIVMSG) => Option(parameters(0))
+    case _ => None
   }
 
-  def contents: Option[String] = {
-    command match {
-      case Some(Command.PRIVMSG) =>
-        Option(if (action) parameters(1).slice(8, parameters(1).length - 1) else parameters(1))
-      case _ => None
-    }
+  lazy val contents: Option[String] = command match {
+    case Some(Command.PRIVMSG) =>
+      Option(if (action) parameters(1).slice(8, parameters(1).length - 1) else parameters(1))
+    case _ => None
   }
 
-  def pingValue: Option[String] = {
-    command match {
-      case Some(Command.PING) => Option(parameters(0))
-      case _ => None
-    }
+  lazy val pingValue: Option[String] = command match {
+    case Some(Command.PING) => Option(parameters(0))
+    case _ => None
   }
 }
 
