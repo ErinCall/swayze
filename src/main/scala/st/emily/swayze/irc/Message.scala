@@ -2,6 +2,7 @@ package st.emily.swayze.irc
 
 import scala.util.{ Failure, Success, Try }
 
+import st.emily.swayze.exceptions
 import Command.Command
 import Numeric.Numeric
 
@@ -59,12 +60,16 @@ case class Message(raw:        Option[String]  = None,
 
 object Message {
   def apply(line: String): Message = {
-    val (prefix, command, numeric, parameters) = fromRawMessageString(line)
-    Message(raw        = Option(line),
-            prefix     = prefix,
-            command    = command,
-            numeric    = numeric,
-            parameters = parameters)
+    try {
+      val (prefix, command, numeric, parameters) = fromRawMessageString(line)
+      Message(raw        = Option(line),
+              prefix     = prefix,
+              command    = command,
+              numeric    = numeric,
+              parameters = parameters)
+    } catch {
+      case e: Exception => throw exceptions.IllegalMessageException(line, e)
+    }
   }
 
   def apply(command: Command, parameters: String*): Message =
