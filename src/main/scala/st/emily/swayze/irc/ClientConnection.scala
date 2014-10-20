@@ -45,7 +45,7 @@ class ClientConnection(remote:   InetSocketAddress,
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
   private[this] var leftover:      String   = ""
-  private[this] var tcp:           ActorRef = null
+  private[this] var connection:    ActorRef = null
 
   private[this] var transferred:   Long     = 0
   private[this] var readsReceived: Long     = 0
@@ -63,8 +63,8 @@ class ClientConnection(remote:   InetSocketAddress,
 
   override def receive: Receive = LoggingReceive {
     case Connected(remote, local) =>
-      tcp = sender()
-      tcp ! Register(self)
+      connection = sender()
+      connection ! Register(self)
       service ! Ready
 
     case Received(data) =>
@@ -86,13 +86,13 @@ class ClientConnection(remote:   InetSocketAddress,
       writesAcked += 1
 
     case PeerClosed =>
-      tcp ! Close
+      connection ! Close
       context.stop(self)
 
     case ErrorClosed =>
 
     case CommandFailed(_: Write) =>
-      tcp ! ResumeWriting
+      connection ! ResumeWriting
 
     case Terminated(self) =>
       log.error("Connection lost")
@@ -103,14 +103,14 @@ class ClientConnection(remote:   InetSocketAddress,
     val data = ByteString(text + "\r\n", encoding)
     transferred += data.size
     writesSent += 1
-    tcp ! Write(data, Ack(writesSent))
+    connection ! Write(data, Ack(writesSent))
   }
 
   def send(message: IrcMessage): Unit = {
     val data = ByteString(message.toRawMessageString, encoding)
     transferred += data.size
     writesSent += 1
-    tcp ! Write(data, Ack(writesSent))
+    connection ! Write(data, Ack(writesSent))
 
     log.debug(s"\n\n<=========== ${data.utf8String}")
   }

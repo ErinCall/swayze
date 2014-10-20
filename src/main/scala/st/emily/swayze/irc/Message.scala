@@ -21,20 +21,18 @@ case class Message(raw:        Option[String]  = None,
                    numeric:    Option[Numeric] = None,
                    parameters: Seq[String]     = Seq()) {
   def toRawMessageString = {
-    raw match {
-      case Some(text) => text
-      case None =>
-        val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
-        if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
-        rawMessage.append(command.getOrElse(numeric.get.id))
+    raw.getOrElse {
+      val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
+      if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
+      rawMessage.append(command.getOrElse(numeric.get.id))
 
-        // last parameter is the "trailing" one and starts with a colon
-        parameters.zipWithIndex.foreach { case (parameter, i) =>
-          val trailing = if (i == parameters.length - 1) ":" else ""
-          rawMessage.append("\u0020" + trailing + parameter)
-        }
+      // last parameter is the "trailing" one and starts with a colon
+      parameters.zipWithIndex.foreach { case (parameter, i) =>
+        val trailing = if (i == parameters.length - 1) ":" else ""
+        rawMessage.append("\u0020" + trailing + parameter)
+      }
 
-        rawMessage.toString + "\r\n"
+      rawMessage.toString + "\r\n"
     }
   }
 
