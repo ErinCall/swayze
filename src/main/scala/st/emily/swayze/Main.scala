@@ -17,7 +17,7 @@ object SwayzeApp extends App {
                          host     = irc.emily.st
                          port     = 6667
                          encoding = UTF-8
-                         channels = [ "#parlour", "#swayze" ]
+                         channels = [ "#swayze" ]
                          modules  = []
                          nickname = "swayze"
                        }

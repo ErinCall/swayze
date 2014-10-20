@@ -129,8 +129,12 @@ class ClientConnection(remote:   InetSocketAddress,
    * agnostic way.
    */
   private[this] def partitionMessageLines(text: String): (Array[String], Option[String]) = {
-    val (lines, last) = text.split("\u000D\u000A").partition(!_.endsWith("\u000D\u000A"))
-    (lines, last.headOption)
+    val lines = text.split("\u000D\u000A")
+    if (text.endsWith("\u000D\u000A")) {
+      (lines, None)
+    } else {
+      (lines.dropRight(1), Option(lines.last))
+    }
   }
 }
 
