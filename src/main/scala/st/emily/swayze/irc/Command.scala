@@ -18,6 +18,7 @@ object Command extends Enumeration {
   val KILL     = Value
   val LINKS    = Value
   val LIST     = Value
+  val MODE     = Value
   val MOTD     = Value
   val NICK     = Value
   val NAMES    = Value

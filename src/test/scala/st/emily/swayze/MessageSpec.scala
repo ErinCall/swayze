@@ -86,6 +86,17 @@ class MessageSpec extends Spec {
 
       message.pingValue.must(be(Option("8C4EF037")))
     }
+
+    @Test def `Parses MODE set by remote server` = {
+      val message = Message(":swayze MODE swayze :+i\r\n")
+
+      message.must(be(Message(raw        = Option(":swayze MODE swayze :+i\r\n"),
+                              prefix     = Option(":swayze"),
+                              command    = Option(Command.MODE),
+                              parameters = Seq("swayze", "+i"),
+                              numeric    = None)))
+    }
+
   }
 
   class `Raw string tests` {
