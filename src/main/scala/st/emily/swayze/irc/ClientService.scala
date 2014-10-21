@@ -34,5 +34,11 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
 
     case message: Message if message.numeric == Option(Numeric.RPL_WELCOME) =>
       config.channels.foreach(sender() ! Message(Command.JOIN, _))
+
+    case message: Message if message.command == Option(Command.UNKNOWN) =>
+      log.warning("Parsed message with unknown command: {}", message)
+
+    case message: Message if message.numeric == Option(Numeric.UNKNOWN) =>
+      log.warning("Parsed message with unknown numeric: {}", message)
   }
 }
