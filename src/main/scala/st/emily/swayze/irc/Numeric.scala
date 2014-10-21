@@ -82,6 +82,7 @@ object Numeric extends Enumeration {
   val RPL_UNIQOPIS          = Value("325")
   val RPL_NOTOPIC           = Value("331")
   val RPL_TOPIC             = Value("332")
+  val RPL_TOPICWHOTIME      = Value("333")
   val RPL_INVITING          = Value("341")
   val RPL_SUMMONING         = Value("342")
   val RPL_INVITELIST        = Value("346")
