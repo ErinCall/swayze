@@ -58,6 +58,8 @@ object Numeric extends Enumeration {
   val RPL_TRACELOG          = Value("261")
   val RPL_TRACEEND          = Value("262")
   val RPL_TRYAGAIN          = Value("263")
+  val RPL_LOCALUSERS        = Value("265")
+  val RPL_GLOBALUSERS       = Value("266")
   val RPL_NONE              = Value("300")
   val RPL_AWAY              = Value("301")
   val RPL_USERHOST          = Value("302")
