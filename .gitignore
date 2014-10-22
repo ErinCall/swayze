@@ -6,6 +6,7 @@ syntax: glob
 *.bak
 #*.off
 *.old
+swayze.conf
 
 # eclipse conf file
 .settings
