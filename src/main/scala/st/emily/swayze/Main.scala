@@ -1,6 +1,8 @@
 package st.emily.swayze
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.ActorSystem
+import net.sourceforge.argparse4j.ArgumentParsers
+import net.sourceforge.argparse4j.internal.HelpScreenException
 
 import st.emily.swayze.conf.SwayzeConfig
 
@@ -9,34 +11,20 @@ import st.emily.swayze.conf.SwayzeConfig
  * Application entry point
  */
 object SwayzeApp extends App {
-  val tempConfig = """
-                   swayze {
-                     networks = [
-                       {
-                         name     = Ladynet
-                         host     = irc.emily.st
-                         port     = 6667
-                         encoding = UTF-8
-                         channels = [ "#swayze" ]
-                         modules  = []
-                         nickname = "swayze"
-                       }
-                       {
-                         name     = Freenode
-                         host     = irc.freenode.net
-                         port     = 6667
-                         encoding = UTF-8
-                         channels = [ "#swayze" ]
-                         modules  = []
-                         nickname = "swayze"
-                       }
-                     ]
-                   }
-                   """
-
-  val system  = ActorSystem("bouncer-system")
-  val bouncer = system.actorOf(
-    BouncerService.props(system, SwayzeConfig(tempConfig)),
-    "bouncer-service"
-  )
+  val parser = ArgumentParsers.newArgumentParser("swayze").description("An IRC bouncer")
+  parser.addArgument("-c,--configuration")
+        .metavar("filename")
+        .dest("configFile")
+        .help("the filename with the configuration file")
+  try {
+    val res     = parser.parseArgs(args)
+    val config  = io.Source.fromFile(res.getString("configFile")).mkString
+    val system  = ActorSystem("bouncer-system")
+    val bouncer = system.actorOf(
+      BouncerService.props(system, SwayzeConfig(config)),
+      "bouncer-service"
+    )
+  } catch {
+    case hse: HelpScreenException =>
+  }
 }
