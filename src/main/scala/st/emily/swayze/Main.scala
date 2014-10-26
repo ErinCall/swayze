@@ -1,7 +1,7 @@
 package st.emily.swayze
 
 import akka.actor.ActorSystem
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ Config, ConfigFactory }
 import net.sourceforge.argparse4j.ArgumentParsers
 import net.sourceforge.argparse4j.impl.Arguments
 import scala.collection.JavaConversions._
@@ -26,8 +26,12 @@ object SwayzeApp extends App {
     val configFile     = res.getList[java.io.File]("configuration").get(0)
     val configText     = io.Source.fromFile(configFile).mkString
 
-    val system         = ActorSystem("bouncer-system", ConfigFactory.parseString(configText))
-    val bouncerService = BouncerService.props(system, SwayzeConfig(configText))
+    val swayzeConfig   = ConfigFactory.parseString(configText)
+    val appConfig      = ConfigFactory.load
+    val finalConfig    = swayzeConfig.withFallback(appConfig)
+
+    val system         = ActorSystem("bouncer-system", finalConfig)
+    val bouncerService = BouncerService.props(system, SwayzeConfig(finalConfig))
     val bouncerActor   = system.actorOf(bouncerService, "bouncer-service")
   } catch {
     case e: Exception =>
@@ -35,18 +39,16 @@ object SwayzeApp extends App {
   }
 }
 
-case class SwayzeConfig(text: String) {
-  lazy val config = ConfigFactory.parseString(text)
-
+case class SwayzeConfig(config: Config) {
   def getNetworkConfigs: List[NetworkConfiguration] = {
     config.getConfigList("swayze.networks").map { network =>
-      NetworkConfiguration(name     = network.getString("name"),
-                           host     = network.getString("host"),
-                           port     = network.getInt("port"),
-                           encoding = network.getString("encoding"),
-                           channels = network.getStringList("channels").toList,
-                           modules  = network.getStringList("modules").toList,
-                           nickname = network.getString("nickname"))
+      NetworkConfiguration(network.getString("name"),
+                           network.getString("host"),
+                           network.getInt("port"),
+                           network.getString("encoding"),
+                           network.getStringList("channels").toList,
+                           network.getStringList("modules").toList,
+                           network.getString("nickname"))
     }.toList
   }
 }

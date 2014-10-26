@@ -1,5 +1,6 @@
 package st.emily.swayze
 
+import com.typesafe.config.ConfigFactory
 import com.simple.simplespec.Spec
 import org.junit.Test
 
@@ -34,7 +35,7 @@ class ConfigurationSpec extends Spec {
                  }
                  """
 
-      val config = SwayzeConfig(text)
+      val config = SwayzeConfig(ConfigFactory.parseString(text))
       config.getNetworkConfigs.must(be(
         List(NetworkConfiguration(name     = "Some Network",
                                   host     = "irc.example.com",
