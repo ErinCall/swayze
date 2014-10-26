@@ -1,4 +1,4 @@
-package st.emily.swayze.conf
+package st.emily.swayze
 
 import com.simple.simplespec.Spec
 import org.junit.Test

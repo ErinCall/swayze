@@ -5,7 +5,7 @@ import akka.event.LoggingReceive
 import com.typesafe.config.Config
 import java.net.InetSocketAddress
 
-import st.emily.swayze.conf.SwayzeConfig
+import st.emily.swayze.SwayzeConfig
 import st.emily.swayze.irc.{ ClientConnection, ClientService }
 
 
@@ -13,7 +13,6 @@ object BouncerService {
   def props(system: ActorSystem, config: SwayzeConfig) =
     Props(classOf[BouncerService], system, config)
 }
-
 
 /**
  * Top-level supervisor responsible for managing client and server
