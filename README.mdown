@@ -32,6 +32,57 @@ To compile, use this command:
     make
 
 
+Configuration
+-------------
+
+Before you can run Swayze, you need a configuration file. Swayze uses
+the [HOCON file format] [1], which is like a variation on JSON that's
+a little kinder on humans. There's not yet a programatic way to manage
+this configuration, nor are the possibilities documented, but if you
+want to get started quickly, the following example should get Swayze
+configured and running on the network of your choice.
+
+    swayze {
+      networks = [
+        {
+          name     = Some Network
+          host     = irc.example.org
+          port     = 6667
+          encoding = UTF-8
+          channels = [ "#channel", "#anotherchannel" ]
+          modules  = []
+          nickname = swayze
+        }
+    }
+
+Save that text into a file called `swayze.conf` and use it when running
+Swayze, described below.
+
+The configuration file can also be used to set some of Akka's options,
+overriding the defaults defined within the program. To get tons of
+debugging output, the following configuration can go right in the same
+file below the Swayze configuration.
+
+    akka {
+      log-config-on-start              = on
+      log-dead-letters                 = 10
+      log-dead-letters-during-shutdown = on
+
+      loglevel                         = "DEBUG"
+      stdout-loglevel                  = "DEBUG"
+
+      actor {
+        debug {
+          autoreceive  = on # DEBUG logging of all AutoReceiveMessages (Kill, PoisonPill etc.)
+          event-stream = on # DEBUG logging of subscription changes on the eventStream
+          lifecycle    = on # DEBUG logging of actor lifecycle changes
+          unhandled    = on
+          receive      = on
+        }
+      }
+    }
+
+
 Running
 -------
 
@@ -41,16 +92,19 @@ a runnable JAR (Java Archive).
     make
 
 This command builds a shaded JAR at `target/swayze-${version}.jar` which
-can be run as a standalone program using Java, as in the following
-example.
+can be run as a standalone program using Java.
 
-    java -jar target/swayze-0.0.1.jar
+This JAR can be run directly by Java, as in the following example. Note
+that the first argument must be the configuration file (see the above
+section).
+
+    java -jar target/swayze-0.0.1.jar swayze.conf
 
 
 Testing
 -------
 
-Swayze makes use of [simplespec] [1] for tests. To run the tests, use this
+Swayze makes use of [simplespec] [2] for tests. To run the tests, use this
 command:
 
     make test
@@ -74,4 +128,5 @@ License
 Swayze is released under the MIT license and is freely distributable.
 
 
-[1]: https://github.com/SimpleFinance/simplespec
+[1]: https://github.com/typesafehub/config/blob/master/HOCON.md
+[2]: https://github.com/SimpleFinance/simplespec

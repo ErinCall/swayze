@@ -96,7 +96,6 @@ class MessageSpec extends Spec {
                               parameters = Seq("swayze", "+i"),
                               numeric    = None)))
     }
-
   }
 
   class `Raw string tests` {
