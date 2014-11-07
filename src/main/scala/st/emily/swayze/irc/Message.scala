@@ -7,12 +7,11 @@ import Command.Command
 import Numeric.Numeric
 
 
-abstract class Message(val raw:        Option[String]  = None,
-                       val prefix:     Option[String]  = None,
+abstract class Message(val prefix:     Option[String]  = None,
                        val command:    Option[Command] = None,
                        val numeric:    Option[Numeric] = None,
                        val parameters: Seq[String]     = Seq()) {
-  lazy val toRawMessage = raw.getOrElse {
+  lazy val toRawMessage = {
     val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
     if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
     rawMessage.append(command.getOrElse(numeric.get))
@@ -32,14 +31,14 @@ object Message {
     try {
       val (prefix, command, numeric, parameters) = fromRawMessage(line)
       command.getOrElse(Command.REPLY) match {
-        case Command.REPLY   => Reply(Option(line), prefix, numeric, parameters)
+        case Command.REPLY   => Reply(prefix, numeric, parameters)
 
-        case Command.PRIVMSG => Privmsg(Option(line), prefix, parameters)
-        case Command.PING    => Ping(Option(line), prefix, parameters)
-        case Command.PONG    => Pong(Option(line), prefix, parameters)
-        case Command.MODE    => Mode(Option(line), prefix, parameters)
-        case Command.JOIN    => Join(Option(line), prefix, parameters)
-        case Command.NICK    => Nick(Option(line), prefix, parameters)
+        case Command.PRIVMSG => Privmsg(prefix, parameters)
+        case Command.PING    => Ping(prefix, parameters)
+        case Command.PONG    => Pong(prefix, parameters)
+        case Command.MODE    => Mode(prefix, parameters)
+        case Command.JOIN    => Join(prefix, parameters)
+        case Command.NICK    => Nick(prefix, parameters)
       }
     } catch {
       case e: Exception => throw FailedParseException(s"Couldn't parse `$line`", e)
@@ -74,6 +73,7 @@ object Message {
         case Success(command) => Option(command)
         case Failure(_) => None
       }
+
     val numeric =
       if (!command.isDefined) {
         Try(Numeric.withName(commandOrReply)) match {
@@ -89,16 +89,14 @@ object Message {
   }
 }
 
-case class Reply(override val raw:        Option[String]  = None,
-                 override val prefix:     Option[String]  = None,
+case class Reply(override val prefix:     Option[String] = None,
                  override val numeric:    Option[Numeric],
-                 override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.REPLY), numeric, parameters)
+                 override val parameters: Seq[String])
+extends Message(prefix, Option(Command.REPLY), numeric, parameters)
 
-case class Privmsg(override val raw:        Option[String]  = None,
-                   override val prefix:     Option[String]  = None,
-                   override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.PRIVMSG), None, parameters) {
+case class Privmsg(override val prefix:     Option[String] = None,
+                   override val parameters: Seq[String])
+extends Message(prefix, Option(Command.PRIVMSG), None, parameters) {
   require(parameters.size == 2, "A Privmsg must have a target and content")
 
   lazy val action: Boolean = parameters(1).startsWith("\u0001ACTION")
@@ -111,53 +109,47 @@ extends Message(raw, prefix, Some(Command.PRIVMSG), None, parameters) {
     }
 }
 
-case class Ping(override val raw:        Option[String]  = None,
-                override val prefix:     Option[String]  = None,
-                override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.PING), None, parameters) {
+case class Ping(override val prefix:     Option[String] = None,
+                override val parameters: Seq[String])
+extends Message(prefix, Option(Command.PING), None, parameters) {
   require(parameters.size == 1, "A Ping must have a value")
 
   lazy val pingValue: String = parameters(0)
 }
 
-case class Pong(override val raw:        Option[String]  = None,
-                override val prefix:     Option[String]  = None,
-                override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.PONG), None, parameters) {
+case class Pong(override val prefix:     Option[String] = None,
+                override val parameters: Seq[String])
+extends Message(prefix, Option(Command.PONG), None, parameters) {
   require(parameters.size == 1, "A Pong must have a value")
 
   lazy val pongValue: String = parameters(0)
 }
 
-case class Mode(override val raw:        Option[String]  = None,
-                override val prefix:     Option[String]  = None,
-                override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.MODE), None, parameters) {
+case class Mode(override val prefix:     Option[String] = None,
+                override val parameters: Seq[String])
+extends Message(prefix, Option(Command.MODE), None, parameters) {
   require(parameters.size == 2, "A Mode must have a target and a mode")
 
   lazy val target: String = parameters(0)
   lazy val mode: String = parameters(1)
 }
 
-case class Nick(override val raw:        Option[String]  = None,
-                override val prefix:     Option[String]  = None,
-                override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.NICK), None, parameters) {
+case class Nick(override val prefix:     Option[String] = None,
+                override val parameters: Seq[String])
+extends Message(prefix, Option(Command.NICK), None, parameters) {
   // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
 
   lazy val nickname: String = parameters(0)
 }
 
-case class User(override val raw:        Option[String]  = None,
-                override val prefix:     Option[String]  = None,
-                override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.USER), None, parameters) {
+case class User(override val prefix:     Option[String] = None,
+                override val parameters: Seq[String])
+extends Message(prefix, Option(Command.USER), None, parameters) {
   // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
 }
 
-case class Join(override val raw:        Option[String]  = None,
-                override val prefix:     Option[String]  = None,
-                override val parameters: Seq[String]     = Seq())
-extends Message(raw, prefix, Some(Command.JOIN), None, parameters) {
+case class Join(override val prefix:     Option[String] = None,
+                override val parameters: Seq[String])
+extends Message(prefix, Option(Command.JOIN), None, parameters) {
   // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
 }

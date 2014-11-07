@@ -33,7 +33,7 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
       sender() ! Pong(parameters = Seq(ping.pingValue))
 
     case reply: Reply =>
-      reply.numeric.get match {
+      reply.numeric match {
         case Numeric.RPL_WELCOME =>
           config.channels.foreach { channel: String => sender() ! Join(parameters = Seq(channel)) }
 
