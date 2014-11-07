@@ -1,4 +1,5 @@
 package st.emily.swayze.exceptions
 
 
-case class IllegalMessageException(raw: String, innerException: Exception) extends Exception
+case class FailedParseException(message: String, inner: Exception)
+extends Exception(s"$message (${inner.getClass}: ${inner.getMessage})")

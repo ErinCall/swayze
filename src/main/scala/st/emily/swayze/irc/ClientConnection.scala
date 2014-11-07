@@ -8,7 +8,7 @@ import java.net.InetSocketAddress
 import java.security.cert.X509Certificate
 import javax.net.ssl.{ SSLContext, SSLEngine, TrustManager, X509TrustManager }
 
-import st.emily.swayze.exceptions
+import st.emily.swayze.exceptions.FailedParseException
 import st.emily.swayze.irc.{ Message => IrcMessage }
 import st.emily.swayze.representation.NetworkConfiguration
 
@@ -78,8 +78,8 @@ class ClientConnection(remote:   InetSocketAddress,
         try {
           service ! IrcMessage(line)
         } catch {
-          case ime: exceptions.IllegalMessageException =>
-            log.warning("Ignoring illegal IRC message: {}", line)
+          case ime: FailedParseException =>
+            log.warning(ime.getMessage)
         }
       }
 
@@ -114,7 +114,7 @@ class ClientConnection(remote:   InetSocketAddress,
   }
 
   def send(message: IrcMessage): Unit = {
-    val data = ByteString(message.toRawMessageString, encoding)
+    val data = ByteString(message.toRawMessage, encoding)
     transferred += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))

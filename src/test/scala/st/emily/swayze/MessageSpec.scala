@@ -8,102 +8,111 @@ import org.junit.Test
 
 
 class MessageSpec extends Spec {
-  class `Parsing tests` {
-    @Test def `Parses PRIVMSG` = {
-      val message = Message(":nick!ident@host.name PRIVMSG target :This is a message\r\n")
+  class `Parses Privmsg` {
+    @Test def `with a normal message` = {
+      Message(":nick!ident@host.name PRIVMSG target :This is a message\r\n") match {
+        case message: Privmsg =>
+          message.must(be(
+            Privmsg(Option(":nick!ident@host.name PRIVMSG target :This is a message\r\n"),
+                    Option(":nick!ident@host.name"),
+                    Seq("target", "This is a message"))))
 
-      message.must(be(Message(raw        = Option(":nick!ident@host.name PRIVMSG target :This is a message\r\n"),
-                              prefix     = Option(":nick!ident@host.name"),
-                              command    = Option(Command.PRIVMSG),
-                              parameters = Seq("target", "This is a message"),
-                              numeric    = None)))
+          message.action.must(be(false))
+          message.target.must(be("target"))
+          message.contents.must(be("This is a message"))
 
-      message.action.must(be(false))
-      message.target.must(be(Option("target")))
-      message.contents.must(be(Option("This is a message")))
+        case _ => throw new Exception("Not a Privmsg")
+      }
     }
 
-    @Test def `Parses PRIVMSG with a colon in the message` = {
-      val message = Message(":nick!ident@host.name PRIVMSG target :This is a : message\r\n")
+    @Test def `with a colon in the message` = {
+      Message(":nick!ident@host.name PRIVMSG target :This is a : message\r\n") match {
+        case message: Privmsg =>
+          message.must(be(
+            Privmsg(Option(":nick!ident@host.name PRIVMSG target :This is a : message\r\n"),
+                    Option(":nick!ident@host.name"),
+                    Seq("target", "This is a : message"))))
 
-      message.must(be(Message(raw        = Option(":nick!ident@host.name PRIVMSG target :This is a : message\r\n"),
-                              prefix     = Option(":nick!ident@host.name"),
-                              command    = Option(Command.PRIVMSG),
-                              parameters = Seq("target", "This is a : message"),
-                              numeric    = None)))
+          message.action.must(be(false))
+          message.target.must(be("target"))
+          message.contents.must(be("This is a : message"))
 
-      message.action.must(be(false))
-      message.target.must(be(Option("target")))
-      message.contents.must(be(Option("This is a : message")))
+        case _ => throw new Exception("Not a Privmsg")
+      }
     }
 
-    @Test def `Parses PRIVMSG keeping whitespace` = {
-      val message = Message(":nick!ident@host.name PRIVMSG target :\t This is a message \r\n")
+    @Test def `with whitespace without truncating it` = {
+      Message(":nick!ident@host.name PRIVMSG target :\t This is a message \r\n") match {
+        case message: Privmsg =>
+          message.must(be(
+            Privmsg(Option(":nick!ident@host.name PRIVMSG target :\t This is a message \r\n"),
+                    Option(":nick!ident@host.name"),
+                    Seq("target", "\t This is a message "))))
 
-      message.must(be(Message(raw        = Option(":nick!ident@host.name PRIVMSG target :\t This is a message \r\n"),
-                              prefix     = Option(":nick!ident@host.name"),
-                              command    = Option(Command.PRIVMSG),
-                              parameters = Seq("target", "\t This is a message "),
-                              numeric    = None)))
+          message.action.must(be(false))
+          message.target.must(be("target"))
+          message.contents.must(be("\t This is a message "))
 
-      message.action.must(be(false))
-      message.target.must(be(Option("target")))
-      message.contents.must(be(Option("\t This is a message ")))
+        case _ => throw new Exception("Not a Privmsg")
+      }
     }
 
-    @Test def `Parses PRIVMSG which contains an action` = {
-      val message = Message(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n")
+    @Test def `with an action` = {
+      Message(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n") match {
+        case message: Privmsg =>
+          message.must(be(
+            Privmsg(Option(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n"),
+                    Option(":nick!ident@host.name"),
+                    Seq("target", "\u0001ACTION emotes\u0001"))))
 
-      message.must(be(Message(raw        = Option(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n"),
-                              prefix     = Option(":nick!ident@host.name"),
-                              command    = Option(Command.PRIVMSG),
-                              parameters = Seq("target", "\u0001ACTION emotes\u0001"),
-                              numeric    = None)))
+          message.action.must(be(true))
+          message.target.must(be("target"))
+          message.contents.must(be("emotes"))
 
-      message.action.must(be(true))
-      message.target.must(be(Option("target")))
-      message.contents.must(be(Option("emotes")))
-    }
-
-    @Test def `Parses REPLY` = {
-      val message = Message(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n")
-
-      message.must(be(Message(raw        = Option(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n"),
-                              prefix     = Option(":irc.host"),
-                              command    = None,
-                              parameters = Seq("someone", "#channel", "user", "0.0.0.0", "irc.host", "someone", "G", "0 Real Name"),
-                              numeric    = Option(Numeric.withName("352")))))
-    }
-
-    @Test def `Parses PING` = {
-      val message = Message("PING :8C4EF037\r\n")
-
-      message.must(be(Message(raw        = Option("PING :8C4EF037\r\n"),
-                              prefix     = None,
-                              command    = Option(Command.PING),
-                              parameters = Seq("8C4EF037"),
-                              numeric    = None)))
-
-      message.pingValue.must(be(Option("8C4EF037")))
-    }
-
-    @Test def `Parses MODE set by remote server` = {
-      val message = Message(":swayze MODE swayze :+i\r\n")
-
-      message.must(be(Message(raw        = Option(":swayze MODE swayze :+i\r\n"),
-                              prefix     = Option(":swayze"),
-                              command    = Option(Command.MODE),
-                              parameters = Seq("swayze", "+i"),
-                              numeric    = None)))
+        case _ => throw new Exception("Not a Privmsg")
+      }
     }
   }
 
-  class `Raw string tests` {
-    @Test def `Creates legal PONG message` = {
-      val message = Message(command    = Option(Command.PONG),
-                            parameters = Seq("8C4EF037"))
+  class `Parses Reply` {
+    @Test def `with WHO reply` = {
+      Message(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n") match {
+        case message: Reply =>
+          message.must(be(
+            Reply(Option(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n"),
+                  Option(":irc.host"),
+                  Option(Numeric.withName("352")),
+                  Seq("someone", "#channel", "user", "0.0.0.0", "irc.host", "someone", "G", "0 Real Name"))))
 
-      message.toRawMessageString.must(be("PONG :8C4EF037\r\n"))
+        case _ => throw new Exception("Not a Reply")
+      }
+    }
+  }
+
+  class `Parses Ping` {
+    @Test def `with hex value` = {
+       Message("PING :8C4EF037\r\n") match {
+        case message: Ping =>
+          message.must(be(
+            Ping(Option("PING :8C4EF037\r\n"), None, Seq("8C4EF037"))))
+          message.pingValue.must(be("8C4EF037"))
+
+        case _ => throw new Exception("Not a Ping")
+      }
+    }
+  }
+
+  class `Parses Mode` {
+    @Test def `set by remote server` = {
+       Message(":swayze MODE swayze :+i\r\n") match {
+        case message: Mode =>
+          message.must(be(
+            Mode(Option(":swayze MODE swayze :+i\r\n"),
+                 Option(":swayze"),
+                 Seq("swayze", "+i"))))
+
+        case _ => throw new Exception("Not a Mode")
+      }
     }
   }
 }

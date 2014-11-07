@@ -26,19 +26,20 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
 
   override def receive: Receive = {
     case Ready =>
-      sender() ! Message(Command.NICK, config.nickname)
-      sender() ! Message(Command.USER, config.nickname, config.nickname, "*", config.nickname)
+      sender() ! Nick(parameters = Seq(config.nickname))
+      sender() ! User(parameters = Seq(config.nickname, config.nickname, "*", config.nickname))
 
-    case message: Message if message.command == Option(Command.PING) =>
-      sender() ! Message(Command.PONG, message.pingValue.getOrElse(config.host))
+    case ping: Ping =>
+      sender() ! Pong(parameters = Seq(ping.pingValue))
 
-    case message: Message if message.numeric == Option(Numeric.RPL_WELCOME) =>
-      config.channels.foreach(sender() ! Message(Command.JOIN, _))
+    case reply: Reply =>
+      reply.numeric.get match {
+        case Numeric.RPL_WELCOME =>
+          config.channels.foreach { channel: String => sender() ! Join(parameters = Seq(channel)) }
 
-    case message: Message if message.command == Option(Command.UNKNOWN) =>
-      log.warning("Parsed message with unknown command: {}", message)
+        case _ =>
+      }
 
-    case message: Message if message.numeric == Option(Numeric.UNKNOWN) =>
-      log.warning("Parsed message with unknown numeric: {}", message)
+    case _ =>
   }
 }

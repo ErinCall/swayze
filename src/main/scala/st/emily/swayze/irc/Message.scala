@@ -2,29 +2,20 @@ package st.emily.swayze.irc
 
 import scala.util.{ Failure, Success, Try }
 
-import st.emily.swayze.exceptions
+import st.emily.swayze.exceptions.FailedParseException
 import Command.Command
 import Numeric.Numeric
 
 
-/**
- * This type represents the contents of a single IRC event.
- *
- * I'd like to break this into many types, one for each kind of message,
- * but it's going to be a pain, and I'd like to move on for now. That's
- * why there are a bunch of methods which do specific things for
- * specific kinds of commands. Lots of match statements that I can get
- * rid of eventually. I know it's awful.
- */
-case class Message(raw:        Option[String]  = None,
-                   prefix:     Option[String]  = None,
-                   command:    Option[Command] = None,
-                   numeric:    Option[Numeric] = None,
-                   parameters: Seq[String]     = Seq()) {
-  lazy val toRawMessageString = raw.getOrElse {
+abstract class Message(val raw:        Option[String]  = None,
+                       val prefix:     Option[String]  = None,
+                       val command:    Option[Command] = None,
+                       val numeric:    Option[Numeric] = None,
+                       val parameters: Seq[String]     = Seq()) {
+  lazy val toRawMessage = raw.getOrElse {
     val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
     if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
-    rawMessage.append(command.getOrElse(numeric.get.id))
+    rawMessage.append(command.getOrElse(numeric.get))
 
     // last parameter is the "trailing" one and starts with a colon
     parameters.zipWithIndex.foreach { case (parameter, i) =>
@@ -34,47 +25,26 @@ case class Message(raw:        Option[String]  = None,
 
     rawMessage.toString + "\r\n"
   }
-
-  lazy val action: Boolean = command match {
-    case Some(Command.PRIVMSG) =>
-      if (parameters(1).startsWith("\u0001ACTION")) true else false
-    case _ => false
-  }
-
-  lazy val target: Option[String] = command match {
-    case Some(Command.PRIVMSG) => Option(parameters(0))
-    case _ => None
-  }
-
-  lazy val contents: Option[String] = command match {
-    case Some(Command.PRIVMSG) =>
-      Option(if (action) parameters(1).slice(8, parameters(1).length - 1) else parameters(1))
-    case _ => None
-  }
-
-  lazy val pingValue: Option[String] = command match {
-    case Some(Command.PING) => Option(parameters(0))
-    case _ => None
-  }
 }
 
 object Message {
   def apply(line: String): Message = {
     try {
-      val (prefix, command, numeric, parameters) = fromRawMessageString(line)
-      Message(raw        = Option(line),
-              prefix     = prefix,
-              command    = command,
-              numeric    = numeric,
-              parameters = parameters)
+      val (prefix, command, numeric, parameters) = fromRawMessage(line)
+      command.getOrElse(Command.REPLY) match {
+        case Command.REPLY   => Reply(Option(line), prefix, numeric, parameters)
+
+        case Command.PRIVMSG => Privmsg(Option(line), prefix, parameters)
+        case Command.PING    => Ping(Option(line), prefix, parameters)
+        case Command.PONG    => Pong(Option(line), prefix, parameters)
+        case Command.MODE    => Mode(Option(line), prefix, parameters)
+        case Command.JOIN    => Join(Option(line), prefix, parameters)
+        case Command.NICK    => Nick(Option(line), prefix, parameters)
+      }
     } catch {
-      case e: Exception => throw exceptions.IllegalMessageException(line, e)
+      case e: Exception => throw FailedParseException(s"Couldn't parse `$line`", e)
     }
   }
-
-  def apply(command: Command, parameters: String*): Message =
-    Message(command = Option(command),
-            parameters = parameters)
 
   /**
    * Breaks a raw IRC message string into parts ready for a Message
@@ -89,26 +59,105 @@ object Message {
    *
    * @see http://tools.ietf.org/html/rfc2812#section-2.3.1
    */
-  def fromRawMessageString(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
-    val tokens         = text.split("\u0020").map(_.trim)
-    val prefix         = tokens(0)(0) match {
-                           case ':' => Option(tokens(0))
-                           case _ => None
-                         }
+  def fromRawMessage(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
+    val tokens = text.split("\u0020").map(_.trim)
+
+    val prefix =
+      tokens(0)(0) match {
+        case ':' => Option(tokens(0))
+        case _ => None
+      }
+
     val commandOrReply = tokens(if (prefix.isDefined) 1 else 0).toUpperCase
-    val command        = Try(Command.withName(commandOrReply)) match {
-                           case Success(command) => Option(command)
-                           case Failure(_) => None
-                         }
-    val numeric        = if (!command.isDefined) {
-                           Try(Numeric.withName(commandOrReply)) match {
-                             case Success(numeric) => Option(numeric)
-                             case Failure(_) => Option(Numeric.UNKNOWN)
-                           }
-                         } else None
-    val params         = tokens.drop(if (prefix.isDefined) 2 else 1).takeWhile(!_.startsWith(":"))
-    val trailing       = text.split(":", 3).lastOption.map(_.stripLineEnd)
+    val command =
+      Try(Command.withName(commandOrReply)) match {
+        case Success(command) => Option(command)
+        case Failure(_) => None
+      }
+    val numeric =
+      if (!command.isDefined) {
+        Try(Numeric.withName(commandOrReply)) match {
+          case Success(numeric) => Option(numeric)
+          case Failure(_) => Option(Numeric.UNKNOWN)
+        }
+      } else None
+
+    val params = tokens.drop(if (prefix.isDefined) 2 else 1).takeWhile(!_.startsWith(":"))
+    val trailing = text.split(":", 3).lastOption.map(_.stripLineEnd)
 
     (prefix, command, numeric, params ++ trailing)
   }
+}
+
+case class Reply(override val raw:        Option[String]  = None,
+                 override val prefix:     Option[String]  = None,
+                 override val numeric:    Option[Numeric],
+                 override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.REPLY), numeric, parameters)
+
+case class Privmsg(override val raw:        Option[String]  = None,
+                   override val prefix:     Option[String]  = None,
+                   override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.PRIVMSG), None, parameters) {
+  require(parameters.size == 2, "A Privmsg must have a target and content")
+
+  lazy val action: Boolean = parameters(1).startsWith("\u0001ACTION")
+  lazy val target: String = parameters(0)
+  lazy val contents: String =
+    if (action) {
+      parameters(1).slice(8, parameters(1).length - 1)
+    } else {
+      parameters(1)
+    }
+}
+
+case class Ping(override val raw:        Option[String]  = None,
+                override val prefix:     Option[String]  = None,
+                override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.PING), None, parameters) {
+  require(parameters.size == 1, "A Ping must have a value")
+
+  lazy val pingValue: String = parameters(0)
+}
+
+case class Pong(override val raw:        Option[String]  = None,
+                override val prefix:     Option[String]  = None,
+                override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.PONG), None, parameters) {
+  require(parameters.size == 1, "A Pong must have a value")
+
+  lazy val pongValue: String = parameters(0)
+}
+
+case class Mode(override val raw:        Option[String]  = None,
+                override val prefix:     Option[String]  = None,
+                override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.MODE), None, parameters) {
+  require(parameters.size == 2, "A Mode must have a target and a mode")
+
+  lazy val target: String = parameters(0)
+  lazy val mode: String = parameters(1)
+}
+
+case class Nick(override val raw:        Option[String]  = None,
+                override val prefix:     Option[String]  = None,
+                override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.NICK), None, parameters) {
+  // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
+
+  lazy val nickname: String = parameters(0)
+}
+
+case class User(override val raw:        Option[String]  = None,
+                override val prefix:     Option[String]  = None,
+                override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.USER), None, parameters) {
+  // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
+}
+
+case class Join(override val raw:        Option[String]  = None,
+                override val prefix:     Option[String]  = None,
+                override val parameters: Seq[String]     = Seq())
+extends Message(raw, prefix, Some(Command.JOIN), None, parameters) {
+  // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
 }
