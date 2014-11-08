@@ -76,7 +76,7 @@ class MessageSpec extends Spec {
         case message: Reply =>
           message.must(be(
             Reply(Option(":irc.host"),
-                  Option(Numeric.withName("352")),
+                  Option(Numeric.RPL_WHOREPLY),
                   Seq("someone", "#channel", "user", "0.0.0.0", "irc.host", "someone", "G", "0 Real Name"))))
 
         case _ => throw new Exception("Not a Reply")
