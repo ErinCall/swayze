@@ -12,9 +12,8 @@ class MessageSpec extends Spec {
     @Test def `with a normal message` = {
       Message(":nick!ident@host.name PRIVMSG target :This is a message\r\n") match {
         case message: Privmsg =>
-          message.must(be(
-            Privmsg(Option(":nick!ident@host.name"),
-                    Seq("target", "This is a message"))))
+          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
+                                  parameters = Seq("target", "This is a message"))))
 
           message.action.must(be(false))
           message.target.must(be("target"))
@@ -27,9 +26,8 @@ class MessageSpec extends Spec {
     @Test def `with a colon in the message` = {
       Message(":nick!ident@host.name PRIVMSG target :This is a : message\r\n") match {
         case message: Privmsg =>
-          message.must(be(
-            Privmsg(Option(":nick!ident@host.name"),
-                    Seq("target", "This is a : message"))))
+          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
+                                  parameters = Seq("target", "This is a : message"))))
 
           message.action.must(be(false))
           message.target.must(be("target"))
@@ -42,9 +40,8 @@ class MessageSpec extends Spec {
     @Test def `with whitespace without truncating it` = {
       Message(":nick!ident@host.name PRIVMSG target :\t This is a message \r\n") match {
         case message: Privmsg =>
-          message.must(be(
-            Privmsg(Option(":nick!ident@host.name"),
-                    Seq("target", "\t This is a message "))))
+          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
+                                  parameters = Seq("target", "\t This is a message "))))
 
           message.action.must(be(false))
           message.target.must(be("target"))
@@ -57,9 +54,8 @@ class MessageSpec extends Spec {
     @Test def `with an action` = {
       Message(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n") match {
         case message: Privmsg =>
-          message.must(be(
-            Privmsg(Option(":nick!ident@host.name"),
-                    Seq("target", "\u0001ACTION emotes\u0001"))))
+          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
+                                  parameters = Seq("target", "\u0001ACTION emotes\u0001"))))
 
           message.action.must(be(true))
           message.target.must(be("target"))
@@ -74,10 +70,16 @@ class MessageSpec extends Spec {
     @Test def `with WHO reply` = {
       Message(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n") match {
         case message: Reply =>
-          message.must(be(
-            Reply(Option(":irc.host"),
-                  Option(Numeric.RPL_WHOREPLY),
-                  Seq("someone", "#channel", "user", "0.0.0.0", "irc.host", "someone", "G", "0 Real Name"))))
+          message.must(be(Reply(prefix     = Option(":irc.host"),
+                                numeric    = Option(Numeric.RPL_WHOREPLY),
+                                parameters = Seq("someone",
+                                                 "#channel",
+                                                 "user",
+                                                 "0.0.0.0",
+                                                 "irc.host",
+                                                 "someone",
+                                                 "G",
+                                                 "0 Real Name"))))
 
         case _ => throw new Exception("Not a Reply")
       }
@@ -88,7 +90,8 @@ class MessageSpec extends Spec {
     @Test def `with hex value` = {
        Message("PING :8C4EF037\r\n") match {
         case message: Ping =>
-          message.must(be(Ping(None, Seq("8C4EF037"))))
+          message.must(be(Ping(prefix     = None,
+                               parameters = Seq("8C4EF037"))))
 
           message.pingValue.must(be("8C4EF037"))
 
@@ -101,7 +104,8 @@ class MessageSpec extends Spec {
     @Test def `set by remote server` = {
        Message(":swayze MODE swayze :+i\r\n") match {
         case message: Mode =>
-          message.must(be(Mode(Option(":swayze"), Seq("swayze", "+i"))))
+          message.must(be(Mode(prefix     = Option(":swayze"),
+                               parameters = Seq("swayze", "+i"))))
 
         case _ => throw new Exception("Not a Mode")
       }
