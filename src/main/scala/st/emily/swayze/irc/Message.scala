@@ -11,7 +11,7 @@ abstract class Message(val prefix:     Option[String]  = None,
                        val command:    Option[Command] = None,
                        val numeric:    Option[Numeric] = None,
                        val parameters: Seq[String]     = Seq()) {
-  lazy val toRawMessage = {
+  override lazy val toString = {
     val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
     if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
     rawMessage.append(command.getOrElse(numeric.get))
@@ -29,8 +29,8 @@ abstract class Message(val prefix:     Option[String]  = None,
 object Message {
   def apply(line: String): Message = {
     try {
-      val (prefix, command, numeric, parameters) = fromRawMessage(line)
-      command.getOrElse(Command.REPLY) match {
+      val (prefix, command, numeric, parameters) = fromString(line)
+      val message = command.getOrElse(Command.REPLY) match {
         case Command.REPLY   => Reply(prefix, numeric, parameters)
 
         case Command.PRIVMSG => Privmsg(prefix, parameters)
@@ -40,6 +40,8 @@ object Message {
         case Command.JOIN    => Join(prefix, parameters)
         case Command.NICK    => Nick(prefix, parameters)
       }
+
+      message
     } catch {
       case e: Exception => throw FailedParseException(s"Couldn't parse `$line`", e)
     }
@@ -58,7 +60,7 @@ object Message {
    *
    * @see http://tools.ietf.org/html/rfc2812#section-2.3.1
    */
-  def fromRawMessage(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
+  def fromString(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
     val tokens = text.split("\u0020").map(_.trim)
 
     val prefix =

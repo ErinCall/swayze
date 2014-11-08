@@ -114,7 +114,7 @@ class ClientConnection(remote:   InetSocketAddress,
   }
 
   def send(message: IrcMessage): Unit = {
-    val data = ByteString(message.toRawMessage, encoding)
+    val data = ByteString(message.toString, encoding)
     transferred += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))
