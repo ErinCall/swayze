@@ -12,7 +12,7 @@ import Numeric.Numeric
  */
 trait Message {
   val prefix: Option[String]
-  val command: Command
+  val command: Command = Command.UNKNOWN
   val numeric: Numeric = Numeric.UNKNOWN
   val parameters: Seq[String]
 
@@ -108,7 +108,7 @@ object Message {
 case class Reply(val prefix: Option[String] = None,
                  override val numeric: Numeric,
                  val parameters: Seq[String]) extends Message {
-  val command = Command.REPLY
+  override val command = Command.REPLY
 }
 
 /**
@@ -120,7 +120,7 @@ case class Reply(val prefix: Option[String] = None,
 case class Privmsg(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 2, "A Privmsg must have a target and content")
 
-  val command = Command.PRIVMSG
+  override val command = Command.PRIVMSG
 
   lazy val action: Boolean = parameters(1).startsWith("\u0001ACTION")
   lazy val target: String = parameters(0)
@@ -144,7 +144,7 @@ object Privmsg { def apply(parameters: Seq[String]): Privmsg = Privmsg(None, par
 case class Ping(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Ping must have a value")
 
-  val command = Command.PING
+  override val command = Command.PING
 
   lazy val pingValue: String = parameters(0)
 }
@@ -160,7 +160,7 @@ object Ping { def apply(parameters: Seq[String]): Ping = Ping(None, parameters) 
 case class Pong(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Pong must have a value")
 
-  val command = Command.PONG
+  override val command = Command.PONG
 
   lazy val pongValue: String = parameters(0)
 }
@@ -176,7 +176,7 @@ object Pong { def apply(parameters: Seq[String]): Pong = Pong(None, parameters) 
 case class Mode(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 2, "A Mode must have a target and a mode")
 
-  val command = Command.MODE
+  override val command = Command.MODE
 
   lazy val target: String = parameters(0)
   lazy val mode: String = parameters(1)
@@ -193,7 +193,7 @@ object Mode { def apply(parameters: Seq[String]): Mode = Mode(None, parameters) 
  * nickname changes.
  */
 case class Nick(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
-  val command = Command.NICK
+  override val command = Command.NICK
 
   lazy val nickname: String = parameters(0)
 }
@@ -209,7 +209,7 @@ object Nick { def apply(parameters: Seq[String]): Nick = Nick(None, parameters) 
 case class User(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
 
-  val command = Command.USER
+  override val command = Command.USER
 }
 
 object User { def apply(parameters: Seq[String]): User = User(None, parameters) }
@@ -223,7 +223,7 @@ object User { def apply(parameters: Seq[String]): User = User(None, parameters) 
 case class Join(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Join must have a channel")
 
-  val command = Command.JOIN
+  override val command = Command.JOIN
 }
 
 object Join { def apply(parameters: Seq[String]): Join = Join(None, parameters) }
@@ -235,7 +235,7 @@ object Join { def apply(parameters: Seq[String]): Join = Join(None, parameters) 
  * users.
  */
 case class Notice(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
-  val command = Command.NOTICE
+  override val command = Command.NOTICE
 }
 
 object Notice { def apply(parameters: Seq[String]): Notice = Notice(None, parameters) }
