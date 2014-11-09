@@ -17,7 +17,7 @@ class MessageSpec extends Spec {
 
     @Test def `with a server-originated reply` = {
       val message = Reply(prefix     = Option(":nick!ident@host.name"),
-                          numeric    = Some(Numeric.RPL_WELCOME),
+                          numeric    = Numeric.RPL_WELCOME,
                           parameters = Seq("This is a welcome message"))
       message.toString.must(be(":nick!ident@host.name 001 :This is a welcome message\r\n"))
     }
@@ -92,7 +92,7 @@ class MessageSpec extends Spec {
       Message(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n") match {
         case message: Reply =>
           message.must(be(Reply(prefix     = Option(":irc.host"),
-                                numeric    = Option(Numeric.RPL_WHOREPLY),
+                                numeric    = Numeric.RPL_WHOREPLY,
                                 parameters = Seq("someone",
                                                  "#channel",
                                                  "user",

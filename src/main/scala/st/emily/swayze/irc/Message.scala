@@ -7,14 +7,19 @@ import Command.Command
 import Numeric.Numeric
 
 
-abstract class Message(val prefix:     Option[String]  = None,
-                       val command:    Command,
-                       val numeric:    Option[Numeric] = None,
-                       val parameters: Seq[String]     = Seq()) {
+/**
+ * Base trait for all IRC messages.
+ */
+trait Message {
+  val prefix: Option[String]
+  val command: Command
+  val numeric: Numeric = Numeric.UNKNOWN
+  val parameters: Seq[String]
+
   override lazy val toString = {
     val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
     if (prefix.isDefined) rawMessage.append(prefix.get + "\u0020")
-    rawMessage.append(if (command == Command.REPLY) numeric.get else command)
+    rawMessage.append(if (command == Command.REPLY) numeric else command)
 
     // last parameter is the "trailing" one and starts with a colon
     parameters.zipWithIndex.foreach { case (parameter, i) =>
@@ -32,7 +37,7 @@ object Message {
       val (prefix, command, numeric, parameters) = fromString(line)
 
       val message = command.getOrElse(Command.REPLY) match {
-        case Command.REPLY   => Reply(prefix, numeric, parameters)
+        case Command.REPLY   => Reply(prefix, numeric.get, parameters)
 
         case Command.PRIVMSG => Privmsg(prefix, parameters)
         case Command.PING    => Ping(prefix, parameters)
@@ -62,7 +67,7 @@ object Message {
    *
    * @see http://tools.ietf.org/html/rfc2812#section-2.3.1
    */
-  def fromString(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
+  private[this] def fromString(text: String): (Option[String], Option[Command], Option[Numeric], Seq[String]) = {
     val tokens = text.split("\u0020").map(_.trim)
 
     val prefix =
@@ -93,16 +98,29 @@ object Message {
   }
 }
 
-case class Reply(override val prefix:     Option[String] = None,
-                 override val numeric:    Option[Numeric],
-                 override val parameters: Seq[String])
-extends Message(prefix, Command.REPLY, numeric, parameters)
+/**
+ * Represents a server reply message.
+ *
+ * Represents a reply from the server. Every reply has a numerical code
+ * which represents the kind of reply, usually with parameters specific
+ * to that reply code.
+ */
+case class Reply(val prefix: Option[String] = None,
+                 override val numeric: Numeric,
+                 val parameters: Seq[String]) extends Message {
+  val command = Command.REPLY
+}
 
-
-case class Privmsg(override val prefix:     Option[String] = None,
-                   override val parameters: Seq[String])
-extends Message(prefix, Command.PRIVMSG, None, parameters) {
+/**
+ * Represents a PRIVMSG message
+ *
+ * Privmsg commands send messages from one user to other users or to
+ * channels.
+ */
+case class Privmsg(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 2, "A Privmsg must have a target and content")
+
+  val command = Command.PRIVMSG
 
   lazy val action: Boolean = parameters(1).startsWith("\u0001ACTION")
   lazy val target: String = parameters(0)
@@ -116,33 +134,49 @@ extends Message(prefix, Command.PRIVMSG, None, parameters) {
 
 object Privmsg { def apply(parameters: Seq[String]): Privmsg = Privmsg(None, parameters) }
 
-
-case class Ping(override val prefix:     Option[String] = None,
-                override val parameters: Seq[String])
-extends Message(prefix, Command.PING, None, parameters) {
+/**
+ * Represents a PING message.
+ *
+ * Ping commands are commonly used by the server to determine if a user
+ * has disconnected, sent at a regular interval. Users may also send
+ * pings to the server.
+ */
+case class Ping(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Ping must have a value")
+
+  val command = Command.PING
 
   lazy val pingValue: String = parameters(0)
 }
 
 object Ping { def apply(parameters: Seq[String]): Ping = Ping(None, parameters) }
 
-
-case class Pong(override val prefix:     Option[String] = None,
-                override val parameters: Seq[String])
-extends Message(prefix, Command.PONG, None, parameters) {
+/**
+ * Represents a PONG message.
+ *
+ * Clients must respond to PING commands with a PONG using the same
+ * value before the server-configured timeout.
+ */
+case class Pong(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Pong must have a value")
+
+  val command = Command.PONG
 
   lazy val pongValue: String = parameters(0)
 }
 
 object Pong { def apply(parameters: Seq[String]): Pong = Pong(None, parameters) }
 
-
-case class Mode(override val prefix:     Option[String] = None,
-                override val parameters: Seq[String])
-extends Message(prefix, Command.MODE, None, parameters) {
+/**
+ * Represents a MODE message.
+ *
+ * Used by clients to set the mode for either a user or channel. Used
+ * by the server to report modes (and changes to modes) to clients.
+ */
+case class Mode(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 2, "A Mode must have a target and a mode")
+
+  val command = Command.MODE
 
   lazy val target: String = parameters(0)
   lazy val mode: String = parameters(1)
@@ -150,38 +184,58 @@ extends Message(prefix, Command.MODE, None, parameters) {
 
 object Mode { def apply(parameters: Seq[String]): Mode = Mode(None, parameters) }
 
-
-case class Nick(override val prefix:     Option[String] = None,
-                override val parameters: Seq[String])
-extends Message(prefix, Command.NICK, None, parameters) {
-  // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
+/**
+ * Represents a NICK message.
+ *
+ * Used by clients to set their nickname. Also used by clients as the
+ * first command sent during logging in on initial connection (if the
+ * server doesn't require a password). Used by the server to report
+ * nickname changes.
+ */
+case class Nick(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
+  val command = Command.NICK
 
   lazy val nickname: String = parameters(0)
 }
 
 object Nick { def apply(parameters: Seq[String]): Nick = Nick(None, parameters) }
 
-
-case class User(override val prefix:     Option[String] = None,
-                override val parameters: Seq[String])
-extends Message(prefix, Command.USER, None, parameters) {
+/**
+ * Represents a USER message.
+ *
+ * Second command used by clients during the login process, used to set
+ * ancillary personal information (ident name and real name).
+ */
+case class User(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
+
+  val command = Command.USER
 }
 
 object User { def apply(parameters: Seq[String]): User = User(None, parameters) }
 
-
-case class Join(override val prefix:     Option[String] = None,
-                override val parameters: Seq[String])
-extends Message(prefix, Command.JOIN, None, parameters) {
+/**
+ * Represents a JOIN message.
+ *
+ * Used by clients to join channels. Used by servers to report users
+ * joining a channel.
+ */
+case class Join(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Join must have a channel")
+
+  val command = Command.JOIN
 }
 
 object Join { def apply(parameters: Seq[String]): Join = Join(None, parameters) }
 
-
-case class Notice(override val prefix:     Option[String] = None,
-                  override val parameters: Seq[String])
-extends Message(prefix, Command.NOTICE, None, parameters)
+/**
+ * Represents a NOTICE message.
+ *
+ * Used by clients and servers to send out-of-band information to
+ * users.
+ */
+case class Notice(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
+  val command = Command.NOTICE
+}
 
 object Notice { def apply(parameters: Seq[String]): Notice = Notice(None, parameters) }
