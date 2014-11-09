@@ -3,13 +3,13 @@ default: package
 build: package
 
 package:
-	@mvn -q clean package -Dmaven.test.skip=true
+	@mvn -q clean package -DskipTests
 
 test:
 	@mvn -q clean test
 
 install:
-	@mvn -q clean install -Dmaven.test.skip=true
+	@mvn -q clean install -DskipTests
 
 clean:
 	@mvn -q clean
@@ -19,4 +19,4 @@ scaladoc: docs
 javadoc: docs
 
 docs:
-	@mvn -q clean scala:doc -Dmaven.test.skip=true
+	@mvn -q clean scala:doc -DskipTests

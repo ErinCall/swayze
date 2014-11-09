@@ -26,16 +26,16 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
 
   override def receive: Receive = {
     case Ready =>
-      sender() ! Nick(parameters = Seq(config.nickname))
-      sender() ! User(parameters = Seq(config.nickname, config.nickname, "*", config.nickname))
+      sender() ! Nick(Seq(config.nickname))
+      sender() ! User(Seq(config.nickname, config.nickname, "*", config.nickname))
 
     case ping: Ping =>
-      sender() ! Pong(parameters = Seq(ping.pingValue))
+      sender() ! Pong(Seq(ping.pingValue))
 
     case reply: Reply =>
-      reply.numeric match {
+      reply.numeric.get match {
         case Numeric.RPL_WELCOME =>
-          config.channels.foreach { channel: String => sender() ! Join(parameters = Seq(channel)) }
+          config.channels.foreach { channel: String => sender() ! Join(Seq(channel)) }
 
         case _ =>
       }
