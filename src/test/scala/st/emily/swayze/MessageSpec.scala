@@ -122,13 +122,25 @@ class MessageSpec extends Spec {
   }
 
   class `Parses Mode` {
-    @Test def `set by remote server` = {
+    @Test def `sent by remote server` = {
        Message(":swayze MODE swayze :+i\r\n") match {
         case message: Mode =>
           message.must(be(Mode(prefix     = Option(":swayze"),
                                parameters = Seq("swayze", "+i"))))
 
         case _ => throw new Exception("Not a Mode")
+      }
+    }
+  }
+
+  class `Parses Notice` {
+    @Test def `sent by remote server` = {
+       Message(":irc.server NOTICE AUTH :*** Looking up your hostname...\r\n") match {
+        case message: Notice =>
+          message.must(be(Notice(prefix     = Option(":irc.server"),
+                                 parameters = Seq("AUTH", "*** Looking up your hostname..."))))
+
+        case _ => throw new Exception("Not a Notice")
       }
     }
   }

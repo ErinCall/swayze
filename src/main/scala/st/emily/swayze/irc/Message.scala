@@ -40,6 +40,7 @@ object Message {
         case Command.MODE    => Mode(prefix, parameters)
         case Command.JOIN    => Join(prefix, parameters)
         case Command.NICK    => Nick(prefix, parameters)
+        case Command.NOTICE  => Notice(prefix, parameters)
       }
 
       message
@@ -97,6 +98,7 @@ case class Reply(override val prefix:     Option[String] = None,
                  override val parameters: Seq[String])
 extends Message(prefix, Command.REPLY, numeric, parameters)
 
+
 case class Privmsg(override val prefix:     Option[String] = None,
                    override val parameters: Seq[String])
 extends Message(prefix, Command.PRIVMSG, None, parameters) {
@@ -114,6 +116,7 @@ extends Message(prefix, Command.PRIVMSG, None, parameters) {
 
 object Privmsg { def apply(parameters: Seq[String]): Privmsg = Privmsg(None, parameters) }
 
+
 case class Ping(override val prefix:     Option[String] = None,
                 override val parameters: Seq[String])
 extends Message(prefix, Command.PING, None, parameters) {
@@ -124,6 +127,7 @@ extends Message(prefix, Command.PING, None, parameters) {
 
 object Ping { def apply(parameters: Seq[String]): Ping = Ping(None, parameters) }
 
+
 case class Pong(override val prefix:     Option[String] = None,
                 override val parameters: Seq[String])
 extends Message(prefix, Command.PONG, None, parameters) {
@@ -133,6 +137,7 @@ extends Message(prefix, Command.PONG, None, parameters) {
 }
 
 object Pong { def apply(parameters: Seq[String]): Pong = Pong(None, parameters) }
+
 
 case class Mode(override val prefix:     Option[String] = None,
                 override val parameters: Seq[String])
@@ -145,6 +150,7 @@ extends Message(prefix, Command.MODE, None, parameters) {
 
 object Mode { def apply(parameters: Seq[String]): Mode = Mode(None, parameters) }
 
+
 case class Nick(override val prefix:     Option[String] = None,
                 override val parameters: Seq[String])
 extends Message(prefix, Command.NICK, None, parameters) {
@@ -155,6 +161,7 @@ extends Message(prefix, Command.NICK, None, parameters) {
 
 object Nick { def apply(parameters: Seq[String]): Nick = Nick(None, parameters) }
 
+
 case class User(override val prefix:     Option[String] = None,
                 override val parameters: Seq[String])
 extends Message(prefix, Command.USER, None, parameters) {
@@ -163,6 +170,7 @@ extends Message(prefix, Command.USER, None, parameters) {
 
 object User { def apply(parameters: Seq[String]): User = User(None, parameters) }
 
+
 case class Join(override val prefix:     Option[String] = None,
                 override val parameters: Seq[String])
 extends Message(prefix, Command.JOIN, None, parameters) {
@@ -170,3 +178,10 @@ extends Message(prefix, Command.JOIN, None, parameters) {
 }
 
 object Join { def apply(parameters: Seq[String]): Join = Join(None, parameters) }
+
+
+case class Notice(override val prefix:     Option[String] = None,
+                  override val parameters: Seq[String])
+extends Message(prefix, Command.NOTICE, None, parameters)
+
+object Notice { def apply(parameters: Seq[String]): Notice = Notice(None, parameters) }
