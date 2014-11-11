@@ -132,7 +132,7 @@ case class Privmsg(val prefix: Option[String] = None, val parameters: Seq[String
     }
 }
 
-object Privmsg { def apply(parameters: Seq[String]): Privmsg = Privmsg(None, parameters) }
+object Privmsg { def apply(parameters: Seq[String]) = Privmsg(None, parameters) }
 
 /**
  * Represents a PING message.
@@ -149,7 +149,7 @@ case class Ping(val prefix: Option[String] = None, val parameters: Seq[String]) 
   lazy val pingValue: String = parameters(0)
 }
 
-object Ping { def apply(parameters: Seq[String]): Ping = Ping(None, parameters) }
+object Ping { def apply(parameters: Seq[String]) = Ping(None, parameters) }
 
 /**
  * Represents a PONG message.
@@ -165,7 +165,7 @@ case class Pong(val prefix: Option[String] = None, val parameters: Seq[String]) 
   lazy val pongValue: String = parameters(0)
 }
 
-object Pong { def apply(parameters: Seq[String]): Pong = Pong(None, parameters) }
+object Pong { def apply(parameters: Seq[String]) = Pong(None, parameters) }
 
 /**
  * Represents a MODE message.
@@ -182,7 +182,7 @@ case class Mode(val prefix: Option[String] = None, val parameters: Seq[String]) 
   lazy val mode: String = parameters(1)
 }
 
-object Mode { def apply(parameters: Seq[String]): Mode = Mode(None, parameters) }
+object Mode { def apply(parameters: Seq[String]) = Mode(None, parameters) }
 
 /**
  * Represents a NICK message.
@@ -198,7 +198,7 @@ case class Nick(val prefix: Option[String] = None, val parameters: Seq[String]) 
   lazy val nickname: String = parameters(0)
 }
 
-object Nick { def apply(parameters: Seq[String]): Nick = Nick(None, parameters) }
+object Nick { def apply(parameters: Seq[String]) = Nick(None, parameters) }
 
 /**
  * Represents a USER message.
@@ -212,7 +212,7 @@ case class User(val prefix: Option[String] = None, val parameters: Seq[String]) 
   override val command = Command.USER
 }
 
-object User { def apply(parameters: Seq[String]): User = User(None, parameters) }
+object User { def apply(parameters: Seq[String]) = User(None, parameters) }
 
 /**
  * Represents a JOIN message.
@@ -226,7 +226,7 @@ case class Join(val prefix: Option[String] = None, val parameters: Seq[String]) 
   override val command = Command.JOIN
 }
 
-object Join { def apply(parameters: Seq[String]): Join = Join(None, parameters) }
+object Join { def apply(parameters: Seq[String]) = Join(None, parameters) }
 
 /**
  * Represents a NOTICE message.
@@ -238,4 +238,4 @@ case class Notice(val prefix: Option[String] = None, val parameters: Seq[String]
   override val command = Command.NOTICE
 }
 
-object Notice { def apply(parameters: Seq[String]): Notice = Notice(None, parameters) }
+object Notice { def apply(parameters: Seq[String]) = Notice(None, parameters) }
