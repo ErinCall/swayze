@@ -10,7 +10,7 @@ import Numeric.Numeric
 /**
  * Base trait for all IRC messages.
  */
-trait Message {
+sealed abstract class Message {
   val prefix: Option[String]
   val command: Command = Command.UNKNOWN
   val numeric: Numeric = Numeric.UNKNOWN
