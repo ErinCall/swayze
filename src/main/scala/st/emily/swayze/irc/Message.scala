@@ -55,6 +55,7 @@ object Message {
 
       (Try(Command.withName(command)), Try(Numeric.withName(command))) match {
         case (Failure(_), Success(numeric))         => Reply(prefix, numeric, parameters)
+
         case (Success(Command.PRIVMSG), Failure(_)) => Privmsg(prefix, parameters)
         case (Success(Command.PING), Failure(_))    => Ping(prefix, parameters)
         case (Success(Command.PONG), Failure(_))    => Pong(prefix, parameters)
@@ -62,6 +63,9 @@ object Message {
         case (Success(Command.JOIN), Failure(_))    => Join(prefix, parameters)
         case (Success(Command.NICK), Failure(_))    => Nick(prefix, parameters)
         case (Success(Command.NOTICE), Failure(_))  => Notice(prefix, parameters)
+
+        case (_, _)  =>
+          throw FailedParseException(f"Unknown kind of message while parsing: `$line`")
       }
     } catch {
       case e: Throwable =>
