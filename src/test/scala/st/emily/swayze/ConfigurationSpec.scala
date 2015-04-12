@@ -8,8 +8,8 @@ import st.emily.swayze.representation.NetworkConfiguration
 
 
 class ConfigurationSpec extends Spec {
-  class `Network configuration tests` {
-    @Test def `Loads networks` = {
+  class NetworkConfiguration {
+    @Test def loads_networks = {
       val text = """
                  swayze {
                    networks = [

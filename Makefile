@@ -20,3 +20,6 @@ javadoc: docs
 
 docs:
 	@mvn -q clean scala:doc -DskipTests
+
+# print a variable with `make print-VARIABLE_NAME`
+print-%: ; @echo $*=$($*)

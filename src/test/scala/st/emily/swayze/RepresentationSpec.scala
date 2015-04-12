@@ -5,7 +5,7 @@ import org.junit.Test
 
 
 class RepresentationSpec extends Spec {
-  class `Configuration tests` {
+  class Configuration {
     @Test def `Loads URI safe name for a network` = {
       val config = NetworkConfiguration(name     = "Some Network",
                                         host     = "irc.example.com",

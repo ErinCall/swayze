@@ -1,5 +1,6 @@
 package st.emily.swayze.irc
 
+import scala.collection.mutable.StringBuilder
 import scala.util.{ Failure, Success, Try }
 
 import st.emily.swayze.exceptions.FailedParseException
@@ -16,41 +17,37 @@ sealed abstract class Message {
   val numeric: Numeric = Numeric.UNKNOWN
   val parameters: Seq[String]
 
-  override lazy val toString = {
-    val rawMessage = new scala.collection.mutable.StringBuilder(510) // TODO: enforce this limit
-    prefix.foreach(p => rawMessage.append(p + "\u0020"))
-    rawMessage.append(if (command == Command.REPLY) numeric else command)
-
-    // last parameter is the "trailing" one and starts with a colon
-    parameters.zipWithIndex.foreach { case (parameter, i) =>
-      val trailing = if (i == parameters.length - 1) ":" else ""
-      rawMessage.append("\u0020" + trailing + parameter)
-    }
-
-    rawMessage.toString + "\r\n"
+  override lazy val toString: String = {
+    val message = new StringBuilder(510) // TODO: enforce this limit in bytes
+    prefix.foreach(p => message.append(":" + p + "\u0020"))
+    message.append(if (command == Command.REPLY) numeric else command)
+    parameters.slice(0, parameters.length - 1).foreach { p => message.append("\u0020" + p) }
+    message.append("\u0020:" + parameters.last)
+    message.toString + "\u000D\u000A"
   }
 }
 
 object Message {
   def apply(line: String): Message = {
     try {
-      val lexemes = line.split("(?<=\u0020)") // keep whitespace
+      val lexemes = line.split("(?<=\u0020)") // keep whitespace (significant for trailing param)
       val (prefix, command, parameters) = (lexemes.headOption, lexemes.tail) match {
         case (Some(x), xs) if x.startsWith(":") => (
-          Option(x.trim),
+          Option(x.tail.trim),
           xs.head.trim,
           xs.tail.takeWhile(!_.startsWith(":")).map(_.trim) :+
-          xs.tail.dropWhile(!_.startsWith(":")).mkString.tail.stripLineEnd
+          xs.tail.dropWhile(!_.startsWith(":")).mkString.tail.stripSuffix("\u000D\u000A")
         )
 
         case (Some(x), xs) => (
           None,
           x.trim,
           xs.takeWhile(!_.startsWith(":")).map(_.trim) :+
-          xs.dropWhile(!_.startsWith(":")).mkString.tail.stripLineEnd
+          xs.dropWhile(!_.startsWith(":")).mkString.tail.stripSuffix("\u000D\u000A")
         )
 
-        case _ => throw FailedParseException(f"Couldn't parse line to message: `$line`")
+        case _ =>
+          throw FailedParseException(f"Couldn't parse line to message: `$line`")
       }
 
       (Try(Command.withName(command)), Try(Numeric.withName(command))) match {
@@ -105,12 +102,11 @@ extends Message with Targetable {
   override val command = Command.PRIVMSG
 
   lazy val action: Boolean = parameters(1).startsWith("\u0001ACTION")
-  lazy val contents: String =
-    if (action) {
-      parameters(1).slice(8, parameters(1).length - 1)
-    } else {
-      parameters(1)
-    }
+  lazy val contents: String = if (action) {
+    parameters(1).slice(8, parameters(1).length - 1)
+  } else {
+    parameters(1)
+  }
 }
 
 object Privmsg {
@@ -124,8 +120,7 @@ object Privmsg {
  * has disconnected, sent at a regular interval. Users may also send
  * pings to the server.
  */
-case class Ping(val prefix: Option[String] = None, val parameters: Seq[String])
-extends Message {
+case class Ping(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Ping must have a value")
 
   override val command = Command.PING
@@ -143,8 +138,7 @@ object Ping {
  * Clients must respond to PING commands with a PONG using the same
  * value before the server-configured timeout.
  */
-case class Pong(val prefix: Option[String] = None, val parameters: Seq[String])
-extends Message {
+case class Pong(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Pong must have a value")
 
   override val command = Command.PONG
@@ -183,8 +177,7 @@ object Mode {
  * server doesn't require a password). Used by the server to report
  * nickname changes.
  */
-case class Nick(val prefix: Option[String] = None, val parameters: Seq[String])
-extends Message {
+case class Nick(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   override val command = Command.NICK
 
   lazy val nickname: String = parameters(0)
@@ -200,8 +193,7 @@ object Nick {
  * Second command used by clients during the login process, used to set
  * ancillary personal information (ident name and real name).
  */
-case class User(val prefix: Option[String] = None, val parameters: Seq[String])
-extends Message {
+case class User(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
 
   override val command = Command.USER
@@ -217,8 +209,7 @@ object User {
  * Used by clients to join channels. Used by servers to report users
  * joining a channel.
  */
-case class Join(val prefix: Option[String] = None, val parameters: Seq[String])
-extends Message {
+case class Join(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Join must have a channel")
 
   override val command = Command.JOIN

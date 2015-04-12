@@ -8,33 +8,37 @@ import org.junit.Test
 
 
 class MessageSpec extends Spec {
-  class `Message can toString` {
-    @Test def `with a server-originated Privmsg` = {
-      val message = Privmsg(prefix     = Option(":nick!ident@host.name"),
-                            parameters = Seq("target", "This is a message"))
+  class MessageToString {
+    @Test def with_a_server_originated_privmsg = {
+      val message = Privmsg(Option("nick!ident@host.name"),
+                            Seq("target", "This is a message"))
       message.toString.must(be(":nick!ident@host.name PRIVMSG target :This is a message\r\n"))
     }
 
-    @Test def `with a server-originated reply` = {
-      val message = Reply(prefix     = Option(":nick!ident@host.name"),
-                          numeric    = Numeric.RPL_WELCOME,
-                          parameters = Seq("This is a welcome message"))
-      message.toString.must(be(":nick!ident@host.name 001 :This is a welcome message\r\n"))
+    @Test def with_a_server_originated_reply = {
+      val message = Reply(Option("irc.host"),
+                          Numeric.RPL_WELCOME,
+                          Seq("This is a welcome message"))
+      message.toString.must(be(":irc.host 001 :This is a welcome message\r\n"))
     }
 
-    @Test def `with a client-originated Join` = {
-      val message = Join(prefix     = None,
-                         parameters = Seq("#channel"))
+    @Test def with_a_client_originated_join = {
+      val message = Join(None, Seq("#channel"))
       message.toString.must(be("JOIN :#channel\r\n"))
+    }
+
+    @Test def with_a_client_originated_privmsg = {
+      val message = Privmsg(None, Seq("#target", " with significant  whitespace "))
+      message.toString.must(be("PRIVMSG #target : with significant  whitespace \r\n"))
     }
   }
 
-  class `Parses Privmsg` {
-    @Test def `with a normal message` = {
+  class ParsePrivmsg {
+    @Test def with_a_normal_message = {
       Message(":nick!ident@host.name PRIVMSG target :This is a message\r\n") match {
         case message: Privmsg =>
-          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
-                                  parameters = Seq("target", "This is a message"))))
+          message.must(be(Privmsg(Option("nick!ident@host.name"),
+                                  Seq("target", "This is a message"))))
 
           message.action.must(be(false))
           message.target.must(be("target"))
@@ -44,11 +48,11 @@ class MessageSpec extends Spec {
       }
     }
 
-    @Test def `with a colon in the message` = {
+    @Test def with_a_colon_in_the_message = {
       Message(":nick!ident@host.name PRIVMSG target :This is a : message\r\n") match {
         case message: Privmsg =>
-          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
-                                  parameters = Seq("target", "This is a : message"))))
+          message.must(be(Privmsg(Option("nick!ident@host.name"),
+                                  Seq("target", "This is a : message"))))
 
           message.action.must(be(false))
           message.target.must(be("target"))
@@ -58,11 +62,11 @@ class MessageSpec extends Spec {
       }
     }
 
-    @Test def `with whitespace without truncating it` = {
+    @Test def with_whitespace_without_truncating_it = {
       Message(":nick!ident@host.name PRIVMSG target :\t This is a message \r\n") match {
         case message: Privmsg =>
-          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
-                                  parameters = Seq("target", "\t This is a message "))))
+          message.must(be(Privmsg(Option("nick!ident@host.name"),
+                                  Seq("target", "\t This is a message "))))
 
           message.action.must(be(false))
           message.target.must(be("target"))
@@ -72,11 +76,11 @@ class MessageSpec extends Spec {
       }
     }
 
-    @Test def `with an action` = {
+    @Test def with_an_action = {
       Message(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n") match {
         case message: Privmsg =>
-          message.must(be(Privmsg(prefix     = Option(":nick!ident@host.name"),
-                                  parameters = Seq("target", "\u0001ACTION emotes\u0001"))))
+          message.must(be(Privmsg(Option("nick!ident@host.name"),
+                                  Seq("target", "\u0001ACTION emotes\u0001"))))
 
           message.action.must(be(true))
           message.target.must(be("target"))
@@ -87,32 +91,32 @@ class MessageSpec extends Spec {
     }
   }
 
-  class `Parses Reply` {
-    @Test def `with WHO reply` = {
+  class ParseReply {
+    @Test def with_who_reply = {
       Message(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n") match {
         case message: Reply =>
-          message.must(be(Reply(prefix     = Option(":irc.host"),
-                                numeric    = Numeric.RPL_WHOREPLY,
-                                parameters = Seq("someone",
-                                                 "#channel",
-                                                 "user",
-                                                 "0.0.0.0",
-                                                 "irc.host",
-                                                 "someone",
-                                                 "G",
-                                                 "0 Real Name"))))
+          message.must(be(Reply(Option("irc.host"),
+                                Numeric.RPL_WHOREPLY,
+                                Seq("someone",
+                                    "#channel",
+                                    "user",
+                                    "0.0.0.0",
+                                    "irc.host",
+                                    "someone",
+                                    "G",
+                                    "0 Real Name"))))
 
         case _ => throw new Exception("Not a Reply")
       }
     }
   }
 
-  class `Parses Ping` {
-    @Test def `with hex value` = {
+  class ParsePing {
+    @Test def with_hex_value = {
        Message("PING :8C4EF037\r\n") match {
         case message: Ping =>
-          message.must(be(Ping(prefix     = None,
-                               parameters = Seq("8C4EF037"))))
+          message.must(be(Ping(None,
+                               Seq("8C4EF037"))))
 
           message.pingValue.must(be("8C4EF037"))
 
@@ -121,24 +125,24 @@ class MessageSpec extends Spec {
     }
   }
 
-  class `Parses Mode` {
-    @Test def `sent by remote server` = {
+  class ParseMode {
+    @Test def sent_by_remote_server = {
        Message(":swayze MODE swayze :+i\r\n") match {
         case message: Mode =>
-          message.must(be(Mode(prefix     = Option(":swayze"),
-                               parameters = Seq("swayze", "+i"))))
+          message.must(be(Mode(Option("swayze"),
+                               Seq("swayze", "+i"))))
 
         case _ => throw new Exception("Not a Mode")
       }
     }
   }
 
-  class `Parses Notice` {
-    @Test def `sent by remote server` = {
+  class ParseNotice {
+    @Test def sent_by_remote_server = {
        Message(":irc.server NOTICE AUTH :*** Looking up your hostname...\r\n") match {
         case message: Notice =>
-          message.must(be(Notice(prefix     = Option(":irc.server"),
-                                 parameters = Seq("AUTH", "*** Looking up your hostname..."))))
+          message.must(be(Notice(Option("irc.server"),
+                                 Seq("AUTH", "*** Looking up your hostname..."))))
 
         case _ => throw new Exception("Not a Notice")
       }
