@@ -19,54 +19,54 @@ sealed abstract class Message {
 
   override lazy val toString: String = {
     val message = new StringBuilder(510) // TODO: enforce this limit in bytes
-    prefix.foreach(p => message.append(":" + p + "\u0020"))
+
+    prefix.foreach { p => message.append(":" + p + "\u0020") }
     message.append(if (command == Command.REPLY) numeric else command)
     parameters.slice(0, parameters.length - 1).foreach { p => message.append("\u0020" + p) }
-    message.append("\u0020:" + parameters.last)
+    parameters.lastOption.foreach { p => message.append("\u0020:" + p) }
+
     message.toString + "\u000D\u000A"
   }
 }
 
 object Message {
   def apply(line: String): Message = {
-    try {
-      val lexemes = line.split("(?<=\u0020)") // keep whitespace (significant for trailing param)
-      val (prefix, command, parameters) = (lexemes.headOption, lexemes.tail) match {
-        case (Some(x), xs) if x.startsWith(":") => (
-          Option(x.tail.trim),
-          xs.head.trim,
-          xs.tail.takeWhile(!_.startsWith(":")).map(_.trim) :+
-          xs.tail.dropWhile(!_.startsWith(":")).mkString.tail.stripSuffix("\u000D\u000A")
-        )
+    val lexemes = line.split("(?<=\u0020)") // keep whitespace (for trailing param)
+    val (prefix, command, params, trailing) = (lexemes.headOption, lexemes.tail) match {
+      case (Some(x), xs) if x.startsWith(":") => (
+        Option(x.tail.trim),
+        xs.head.trim,
+        xs.tail.takeWhile(!_.startsWith(":")).map(_.trim),
+        xs.tail.dropWhile(!_.startsWith(":")).mkString.stripPrefix(":").stripSuffix("\u000D\u000A")
+      )
 
-        case (Some(x), xs) => (
-          None,
-          x.trim,
-          xs.takeWhile(!_.startsWith(":")).map(_.trim) :+
-          xs.dropWhile(!_.startsWith(":")).mkString.tail.stripSuffix("\u000D\u000A")
-        )
+      case (Some(x), xs) => (
+        None,
+        x.trim,
+        xs.takeWhile(!_.startsWith(":")).map(_.trim),
+        xs.dropWhile(!_.startsWith(":")).mkString.stripPrefix(":").stripSuffix("\u000D\u000A")
+      )
 
-        case _ =>
-          throw FailedParseException(f"Couldn't parse line to message: `$line`")
-      }
+      case _ =>
+        throw FailedParseException(f"Couldn't parse line to message: `$line`")
+    }
 
-      (Try(Command.withName(command)), Try(Numeric.withName(command))) match {
-        case (Failure(_), Success(numeric))         => Reply(prefix, numeric, parameters)
+    val paramsWithTrailing = if (trailing.isEmpty) params else params :+ trailing
 
-        case (Success(Command.PRIVMSG), Failure(_)) => Privmsg(prefix, parameters)
-        case (Success(Command.PING), Failure(_))    => Ping(prefix, parameters)
-        case (Success(Command.PONG), Failure(_))    => Pong(prefix, parameters)
-        case (Success(Command.MODE), Failure(_))    => Mode(prefix, parameters)
-        case (Success(Command.JOIN), Failure(_))    => Join(prefix, parameters)
-        case (Success(Command.NICK), Failure(_))    => Nick(prefix, parameters)
-        case (Success(Command.NOTICE), Failure(_))  => Notice(prefix, parameters)
+    (Try(Command.withName(command)), Try(Numeric.withName(command))) match {
+      case (Failure(_), Success(numeric))         => Reply(prefix, numeric, paramsWithTrailing)
 
-        case (_, _)  =>
-          throw FailedParseException(f"Unknown kind of message while parsing: `$line`")
-      }
-    } catch {
-      case e: Throwable =>
-        throw FailedParseException(f"Couldn't parse line to message: `$line` (${e.getClass}: ${e.getMessage})")
+      case (Success(Command.PRIVMSG), Failure(_)) => Privmsg(prefix, paramsWithTrailing)
+      case (Success(Command.PING), Failure(_))    => Ping(prefix, paramsWithTrailing)
+      case (Success(Command.PONG), Failure(_))    => Pong(prefix, paramsWithTrailing)
+      case (Success(Command.MODE), Failure(_))    => Mode(prefix, paramsWithTrailing)
+      case (Success(Command.JOIN), Failure(_))    => Join(prefix, paramsWithTrailing)
+      case (Success(Command.NICK), Failure(_))    => Nick(prefix, paramsWithTrailing)
+      case (Success(Command.NOTICE), Failure(_))  => Notice(prefix, paramsWithTrailing)
+      case (Success(Command.QUIT), Failure(_))    => Quit(prefix, paramsWithTrailing)
+
+      case (_, _)  =>
+        throw FailedParseException(f"Unknown kind of message while parsing: `$line`")
     }
   }
 }
@@ -95,8 +95,8 @@ case class Reply(val prefix: Option[String] = None,
  * Privmsg commands send messages from one user to other users or to
  * channels.
  */
-case class Privmsg(val prefix: Option[String] = None, val parameters: Seq[String])
-extends Message with Targetable {
+case class Privmsg(val prefix: Option[String] = None,
+                   val parameters: Seq[String]) extends Message with Targetable {
   require(parameters.size == 2, "A Privmsg must have a target and content")
 
   override val command = Command.PRIVMSG
@@ -120,7 +120,8 @@ object Privmsg {
  * has disconnected, sent at a regular interval. Users may also send
  * pings to the server.
  */
-case class Ping(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
+case class Ping(val prefix: Option[String] = None,
+                val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Ping must have a value")
 
   override val command = Command.PING
@@ -138,7 +139,8 @@ object Ping {
  * Clients must respond to PING commands with a PONG using the same
  * value before the server-configured timeout.
  */
-case class Pong(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
+case class Pong(val prefix: Option[String] = None,
+                val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Pong must have a value")
 
   override val command = Command.PONG
@@ -156,8 +158,8 @@ object Pong {
  * Used by clients to set the mode for either a user or channel. Used
  * by the server to report modes (and changes to modes) to clients.
  */
-case class Mode(val prefix: Option[String] = None, val parameters: Seq[String])
-extends Message with Targetable {
+case class Mode(val prefix: Option[String] = None,
+                val parameters: Seq[String]) extends Message with Targetable {
   require(parameters.size == 2, "A Mode must have a target and a mode")
 
   override val command = Command.MODE
@@ -177,7 +179,8 @@ object Mode {
  * server doesn't require a password). Used by the server to report
  * nickname changes.
  */
-case class Nick(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
+case class Nick(val prefix: Option[String] = None,
+                val parameters: Seq[String]) extends Message {
   override val command = Command.NICK
 
   lazy val nickname: String = parameters(0)
@@ -193,7 +196,8 @@ object Nick {
  * Second command used by clients during the login process, used to set
  * ancillary personal information (ident name and real name).
  */
-case class User(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
+case class User(val prefix: Option[String] = None,
+                val parameters: Seq[String]) extends Message {
   // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
 
   override val command = Command.USER
@@ -209,7 +213,8 @@ object User {
  * Used by clients to join channels. Used by servers to report users
  * joining a channel.
  */
-case class Join(val prefix: Option[String] = None, val parameters: Seq[String]) extends Message {
+case class Join(val prefix: Option[String] = None,
+                val parameters: Seq[String]) extends Message {
   require(parameters.size == 1, "A Join must have a channel")
 
   override val command = Command.JOIN
@@ -225,11 +230,27 @@ object Join {
  * Used by clients and servers to send out-of-band information to
  * users.
  */
-case class Notice(val prefix: Option[String] = None, val parameters: Seq[String])
+case class Notice(val prefix: Option[String] = None,
+                  val parameters: Seq[String])
 extends Message {
   override val command = Command.NOTICE
 }
 
 object Notice {
   def apply(parameters: Seq[String]): Notice = Notice(None, parameters)
+}
+
+/**
+ * Represents a QUIT message.
+ *
+ * Used by clients and servers to advise users and the server that the
+ * client is preparing to terminate the connection.
+ */
+case class Quit(val prefix: Option[String] = None,
+                val parameters: Seq[String] = Seq()) extends Message {
+  override val command = Command.QUIT
+}
+
+object Quit {
+  def apply(parameters: Seq[String]): Quit = Quit(None, parameters)
 }

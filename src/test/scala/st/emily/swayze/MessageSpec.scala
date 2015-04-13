@@ -27,6 +27,11 @@ class MessageSpec extends Spec {
       message.toString.must(be("JOIN :#channel\r\n"))
     }
 
+    @Test def with_a_client_command_without_parameters = {
+      val message = Quit()
+      message.toString.must(be("QUIT\r\n"))
+    }
+
     @Test def with_a_client_originated_privmsg = {
       val message = Privmsg(None, Seq("#target", " with significant  whitespace "))
       message.toString.must(be("PRIVMSG #target : with significant  whitespace \r\n"))
@@ -145,6 +150,17 @@ class MessageSpec extends Spec {
                                  Seq("AUTH", "*** Looking up your hostname..."))))
 
         case _ => throw new Exception("Not a Notice")
+      }
+    }
+  }
+
+  class ParseQuit {
+    @Test def sent_by_remote_server = {
+       Message("QUIT\r\n") match {
+         case message: Quit =>
+           message.must(be(Quit()))
+
+         case _ => throw new Exception("Not a Notice")
       }
     }
   }
