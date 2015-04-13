@@ -99,21 +99,19 @@ case class Reply(val prefix: Option[String] = None,
  */
 case class Privmsg(val prefix: Option[String] = None,
                    val parameters: Seq[String]) extends Message with Targetable {
-  require(parameters.size == 2, "A Privmsg must have a target and content")
 
   override val command = Command.PRIVMSG
-
   lazy val action: Boolean = parameters(1).startsWith("\u0001ACTION")
   lazy val contents: String = if (action) {
     parameters(1).slice(8, parameters(1).length - 1)
   } else {
     parameters(1)
   }
+
+  require(parameters.size == 2, "A Privmsg must have a target and content")
 }
 
-object Privmsg {
-  def apply(parameters: Seq[String]): Privmsg = Privmsg(None, parameters)
-}
+object Privmsg { def apply(parameters: Seq[String]): Privmsg = Privmsg(None, parameters) }
 
 /**
  * Represents a PING message.
@@ -124,16 +122,12 @@ object Privmsg {
  */
 case class Ping(val prefix: Option[String] = None,
                 val parameters: Seq[String]) extends Message {
-  require(parameters.size == 1, "A Ping must have a value")
-
   override val command = Command.PING
-
   lazy val pingValue: String = parameters(0)
+  require(parameters.size == 1, "A Ping must have a value")
 }
 
-object Ping {
-  def apply(parameters: Seq[String]): Ping = Ping(None, parameters)
-}
+object Ping { def apply(parameters: Seq[String]): Ping = Ping(None, parameters) }
 
 /**
  * Represents a PONG message.
@@ -143,16 +137,12 @@ object Ping {
  */
 case class Pong(val prefix: Option[String] = None,
                 val parameters: Seq[String]) extends Message {
-  require(parameters.size == 1, "A Pong must have a value")
-
   override val command = Command.PONG
-
   lazy val pongValue: String = parameters(0)
+  require(parameters.size == 1, "A Pong must have a value")
 }
 
-object Pong {
-  def apply(parameters: Seq[String]): Pong = Pong(None, parameters)
-}
+object Pong { def apply(parameters: Seq[String]): Pong = Pong(None, parameters) }
 
 /**
  * Represents a MODE message.
@@ -162,16 +152,13 @@ object Pong {
  */
 case class Mode(val prefix: Option[String] = None,
                 val parameters: Seq[String]) extends Message with Targetable {
-  require(parameters.size == 2, "A Mode must have a target and a mode")
 
   override val command = Command.MODE
-
   lazy val mode: String = parameters(1)
+  require(parameters.size == 2, "A Mode must have a target and a mode")
 }
 
-object Mode {
-  def apply(parameters: Seq[String]): Mode = Mode(None, parameters)
-}
+object Mode { def apply(parameters: Seq[String]): Mode = Mode(None, parameters) }
 
 /**
  * Represents a NICK message.
@@ -184,13 +171,10 @@ object Mode {
 case class Nick(val prefix: Option[String] = None,
                 val parameters: Seq[String]) extends Message {
   override val command = Command.NICK
-
   lazy val nickname: String = parameters(0)
 }
 
-object Nick {
-  def apply(parameters: Seq[String]): Nick = Nick(None, parameters)
-}
+object Nick { def apply(parameters: Seq[String]): Nick = Nick(None, parameters) }
 
 /**
  * Represents a USER message.
@@ -205,9 +189,7 @@ case class User(val prefix: Option[String] = None,
   override val command = Command.USER
 }
 
-object User {
-  def apply(parameters: Seq[String]): User = User(None, parameters)
-}
+object User { def apply(parameters: Seq[String]): User = User(None, parameters) }
 
 /**
  * Represents a JOIN message.
@@ -217,14 +199,11 @@ object User {
  */
 case class Join(val prefix: Option[String] = None,
                 val parameters: Seq[String]) extends Message {
-  require(parameters.size == 1, "A Join must have a channel")
-
   override val command = Command.JOIN
+  require(parameters.size == 1, "A Join must have a channel")
 }
 
-object Join {
-  def apply(parameters: Seq[String]): Join = Join(None, parameters)
-}
+object Join { def apply(parameters: Seq[String]): Join = Join(None, parameters) }
 
 /**
  * Represents a NOTICE message.
@@ -238,9 +217,7 @@ extends Message {
   override val command = Command.NOTICE
 }
 
-object Notice {
-  def apply(parameters: Seq[String]): Notice = Notice(None, parameters)
-}
+object Notice { def apply(parameters: Seq[String]): Notice = Notice(None, parameters) }
 
 /**
  * Represents a QUIT message.
@@ -253,6 +230,4 @@ case class Quit(val prefix: Option[String] = None,
   override val command = Command.QUIT
 }
 
-object Quit {
-  def apply(parameters: Seq[String]): Quit = Quit(None, parameters)
-}
+object Quit { def apply(parameters: Seq[String]): Quit = Quit(None, parameters) }
