@@ -22,10 +22,8 @@ sealed abstract class Message {
 
     prefix.foreach { p => message.append(":" + p + "\u0020") }
     message.append(if (command == Command.REPLY) numeric else command)
-    if (!parameters.isEmpty) {
-      parameters.init.foreach { p => message.append("\u0020" + p) }
-      parameters.lastOption.foreach { p => message.append("\u0020:" + p) }
-    }
+    parameters.dropRight(1).foreach { p => message.append("\u0020" + p) }
+    parameters.lastOption.foreach { p => message.append("\u0020:" + p) }
 
     message.toString + "\u000D\u000A"
   }
