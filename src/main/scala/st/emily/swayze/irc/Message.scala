@@ -231,11 +231,9 @@ case class Message(val prefix:     Option[String]  = None,
                    val numeric:    Option[Numeric] = None,
                    val parameters: Seq[String]     = Seq()) {
   override lazy val toString: String = {
-    (Seq(prefix.map(":" + _),
-         numeric.map(_.toString),
-         command.map(_.toString)).flatten ++ parameters.dropRight(1)).mkString("\u0020") +
-      parameters.lastOption.map("\u0020:" + _).getOrElse("") +
-      "\u000D\u000A"
+    (Seq(prefix.map(":" + _), numeric, command) ++
+      parameters.dropRight(1).map(Option(_)) :+
+      parameters.lastOption.map(":" + _)).flatten.mkString("\u0020") + "\u000D\u000A"
   }
 }
 
