@@ -4,33 +4,243 @@ import scala.collection.mutable.StringBuilder
 import scala.util.{ Failure, Success, Try }
 
 import st.emily.swayze.exceptions.FailedParseException
-import Command.Command
-import Numeric.Numeric
 
 
-/**
- * Base trait for all IRC messages.
- */
-sealed abstract class Message {
-  val prefix: Option[String]
-  val command: Command = Command.UNKNOWN
-  val numeric: Numeric = Numeric.UNKNOWN
-  val parameters: Seq[String]
+object Command extends Enumeration {
+  type Command = Value
 
+  val AWAY     = Value
+  val CONNECT  = Value
+  val DIE      = Value
+  val INFO     = Value
+  val INVITE   = Value
+  val ISON     = Value
+  val JOIN     = Value
+  val KICK     = Value
+  val KILL     = Value
+  val LINKS    = Value
+  val LIST     = Value
+  val MODE     = Value
+  val MOTD     = Value
+  val NICK     = Value
+  val NAMES    = Value
+  val NOTICE   = Value
+  val OPER     = Value
+  val PART     = Value
+  val PASS     = Value
+  val PING     = Value
+  val PONG     = Value
+  val PRIVMSG  = Value
+  val QUIT     = Value
+  val REHASH   = Value
+  val RESTART  = Value
+  val SERVICE  = Value
+  val SERVLIST = Value
+  val SQUERY   = Value
+  val SQUIT    = Value
+  val STATS    = Value
+  val SUMMON   = Value
+  val TIME     = Value
+  val TOPIC    = Value
+  val TRACE    = Value
+  val USER     = Value
+  val USERHOST = Value
+  val USERS    = Value
+  val VERSION  = Value
+  val WALLOPS  = Value
+  val WHO      = Value
+  val WHOIS    = Value
+  val WHOWAS   = Value
+}
+
+object Numeric extends Enumeration {
+  type Numeric = Value
+
+  val RPL_WELCOME           = Value("001")
+  val RPL_YOURHOST          = Value("002")
+  val RPL_CREATED           = Value("003")
+  val RPL_MYINFO            = Value("004")
+  val RPL_BOUNCE            = Value("005")
+  val RPL_TRACELINK         = Value("200")
+  val RPL_TRACECONNECTING   = Value("201")
+  val RPL_TRACEHANDSHAKE    = Value("202")
+  val RPL_TRACEUNKNOWN      = Value("203")
+  val RPL_TRACEOPERATOR     = Value("204")
+  val RPL_TRACEUSER         = Value("205")
+  val RPL_TRACESERVER       = Value("206")
+  val RPL_TRACESERVICE      = Value("207")
+  val RPL_TRACENEWTYPE      = Value("208")
+  val RPL_TRACECLASS        = Value("209")
+  val RPL_TRACERECONNECT    = Value("210")
+  val RPL_STATSLINKINFO     = Value("211")
+  val RPL_STATSCOMMANDS     = Value("212")
+  val RPL_STATSCLINE        = Value("213")
+  val RPL_STATSNLINE        = Value("214")
+  val RPL_STATSILINE        = Value("215")
+  val RPL_STATSKLINE        = Value("216")
+  val RPL_STATSQLINE        = Value("217")
+  val RPL_STATSYLINE        = Value("218")
+  val RPL_ENDOFSTATS        = Value("219")
+  val RPL_UMODEIS           = Value("221")
+  val RPL_SERVICEINFO       = Value("231")
+  val RPL_ENDOFSERVICES     = Value("232")
+  val RPL_SERVICE           = Value("233")
+  val RPL_SERVLIST          = Value("234")
+  val RPL_SERVLISTEND       = Value("235")
+  val RPL_STATSVLINE        = Value("240")
+  val RPL_STATSLLINE        = Value("241")
+  val RPL_STATSUPTIME       = Value("242")
+  val RPL_STATSOLINE        = Value("243")
+  val RPL_STATSHLINE        = Value("244")
+  val RPL_STATSPING         = Value("246")
+  val RPL_STATSBLINE        = Value("247")
+  val RPL_STATSULINE        = Value("249")
+  val RPL_STATSDLINE        = Value("250")
+  val RPL_LUSERCLIENT       = Value("251")
+  val RPL_LUSEROP           = Value("252")
+  val RPL_LUSERUNKNOWN      = Value("253")
+  val RPL_LUSERCHANNELS     = Value("254")
+  val RPL_LUSERME           = Value("255")
+  val RPL_ADMINME           = Value("256")
+  val RPL_ADMINLOC1         = Value("257")
+  val RPL_ADMINLOC2         = Value("258")
+  val RPL_ADMINEMAIL        = Value("259")
+  val RPL_TRACELOG          = Value("261")
+  val RPL_TRACEEND          = Value("262")
+  val RPL_TRYAGAIN          = Value("263")
+  val RPL_LOCALUSERS        = Value("265")
+  val RPL_GLOBALUSERS       = Value("266")
+  val RPL_NONE              = Value("300")
+  val RPL_AWAY              = Value("301")
+  val RPL_USERHOST          = Value("302")
+  val RPL_ISON              = Value("303")
+  val RPL_UNAWAY            = Value("305")
+  val RPL_NOWAWAY           = Value("306")
+  val RPL_WHOISUSER         = Value("311")
+  val RPL_WHOISSERVER       = Value("312")
+  val RPL_WHOISOPERATOR     = Value("313")
+  val RPL_WHOWASUSER        = Value("314")
+  val RPL_ENDOFWHO          = Value("315")
+  val RPL_WHOISCHANOP       = Value("316")
+  val RPL_WHOISIDLE         = Value("317")
+  val RPL_ENDOFWHOIS        = Value("318")
+  val RPL_WHOISCHANNELS     = Value("319")
+  val RPL_LISTSTART         = Value("321")
+  val RPL_LIST              = Value("322")
+  val RPL_LISTEND           = Value("323")
+  val RPL_CHANNELMODEIS     = Value("324")
+  val RPL_UNIQOPIS          = Value("325")
+  val RPL_NOTOPIC           = Value("331")
+  val RPL_TOPIC             = Value("332")
+  val RPL_TOPICWHOTIME      = Value("333")
+  val RPL_INVITING          = Value("341")
+  val RPL_SUMMONING         = Value("342")
+  val RPL_INVITELIST        = Value("346")
+  val RPL_ENDOFINVITELIST   = Value("347")
+  val RPL_EXCEPTLIST        = Value("348")
+  val RPL_ENDOFEXCEPTLIST   = Value("349")
+  val RPL_VERSION           = Value("351")
+  val RPL_WHOREPLY          = Value("352")
+  val RPL_NAMREPLY          = Value("353")
+  val RPL_WHOSPCRPL         = Value("354")
+  val RPL_KILLDONE          = Value("361")
+  val RPL_CLOSING           = Value("362")
+  val RPL_CLOSEEND          = Value("363")
+  val RPL_LINKS             = Value("364")
+  val RPL_ENDOFLINKS        = Value("365")
+  val RPL_ENDOFNAMES        = Value("366")
+  val RPL_BANLIST           = Value("367")
+  val RPL_ENDOFBANLIST      = Value("368")
+  val RPL_ENDOFWHOWAS       = Value("369")
+  val RPL_INFO              = Value("371")
+  val RPL_MOTD              = Value("372")
+  val RPL_INFOSTART         = Value("373")
+  val RPL_ENDOFINFO         = Value("374")
+  val RPL_MOTDSTART         = Value("375")
+  val RPL_ENDOFMOTD         = Value("376")
+  val RPL_YOUREOPER         = Value("381")
+  val RPL_REHASHING         = Value("382")
+  val RPL_YOURESERVICE      = Value("383")
+  val RPL_MYPORTIS          = Value("384")
+  val RPL_TIME              = Value("391")
+  val RPL_USERSSTART        = Value("392")
+  val RPL_USERS             = Value("393")
+  val RPL_ENDOFUSERS        = Value("394")
+  val RPL_NOUSERS           = Value("395")
+  val ERR_NOSUCHNICK        = Value("401")
+  val ERR_NOSUCHSERVER      = Value("402")
+  val ERR_NOSUCHCHANNEL     = Value("403")
+  val ERR_CANNOTSENDTOCHAN  = Value("404")
+  val ERR_TOOMANYCHANNELS   = Value("405")
+  val ERR_WASNOSUCHNICK     = Value("406")
+  val ERR_TOOMANYTARGETS    = Value("407")
+  val ERR_NOSUCHSERVICE     = Value("408")
+  val ERR_NOORIGIN          = Value("409")
+  val ERR_NORECIPIENT       = Value("411")
+  val ERR_NOTEXTTOSEND      = Value("412")
+  val ERR_NOTOPLEVEL        = Value("413")
+  val ERR_WILDTOPLEVEL      = Value("414")
+  val ERR_BADMASK           = Value("415")
+  val ERR_UNKNOWNCOMMAND    = Value("421")
+  val ERR_NOMOTD            = Value("422")
+  val ERR_NOADMININFO       = Value("423")
+  val ERR_FILEERROR         = Value("424")
+  val ERR_NONICKNAMEGIVEN   = Value("431")
+  val ERR_ERRONEUSNICKNAME  = Value("432")
+  val ERR_NICKNAMEINUSE     = Value("433")
+  val ERR_NICKCOLLISION     = Value("436")
+  val ERR_UNAVAILRESOURCE   = Value("437")
+  val ERR_USERNOTINCHANNEL  = Value("441")
+  val ERR_NOTONCHANNEL      = Value("442")
+  val ERR_USERONCHANNEL     = Value("443")
+  val ERR_NOLOGIN           = Value("444")
+  val ERR_SUMMONDISABLED    = Value("445")
+  val ERR_USERSDISABLED     = Value("446")
+  val ERR_NOTREGISTERED     = Value("451")
+  val ERR_NEEDMOREPARAMS    = Value("461")
+  val ERR_ALREADYREGISTERED = Value("462")
+  val ERR_NOPERMFORHOST     = Value("463")
+  val ERR_PASSWDMISMATCH    = Value("464")
+  val ERR_YOUREBANNEDCREEP  = Value("465")
+  val ERR_YOUWILLBEBANNED   = Value("466")
+  val ERR_KEYSET            = Value("467")
+  val ERR_CHANNELISFULL     = Value("471")
+  val ERR_UNKNOWNMODE       = Value("472")
+  val ERR_INVITEONLYCHAN    = Value("473")
+  val ERR_BANNEDFROMCHAN    = Value("474")
+  val ERR_BADCHANNELKEY     = Value("475")
+  val ERR_BADCHANMASK       = Value("476")
+  val ERR_NOCHANMODES       = Value("477")
+  val ERR_BANLISTFULL       = Value("478")
+  val ERR_NOPRIVILEGES      = Value("481")
+  val ERR_CHANOPRIVSNEEDED  = Value("482")
+  val ERR_CANTKILLSERVER    = Value("483")
+  val ERR_RESTRICTED        = Value("484")
+  val ERR_UNIQOPRIVSNEEDED  = Value("485")
+  val ERR_NOOPERHOST        = Value("491")
+  val ERR_NOSERVICEHOST     = Value("492")
+  val ERR_UMODEUNKNOWNFLAG  = Value("501")
+  val ERR_USERSDONTMATCH    = Value("502")
+}
+
+import Command._
+import Numeric._
+
+case class Message(val prefix:     Option[String]  = None,
+                   val command:    Option[Command] = None,
+                   val numeric:    Option[Numeric] = None,
+                   val parameters: Seq[String]     = Seq()) {
   override lazy val toString: String = {
-    val message = new StringBuilder(510) // TODO: enforce this limit in bytes
-
-    prefix.foreach { p => message.append(":" + p + "\u0020") }
-    message.append(if (command == Command.REPLY) numeric else command)
-    parameters.dropRight(1).foreach { p => message.append("\u0020" + p) }
-    parameters.lastOption.foreach { p => message.append("\u0020:" + p) }
-
-    message.toString + "\u000D\u000A"
+    (Seq(prefix.map(":" + _),
+         numeric.map(_.toString),
+         command.map(_.toString)).flatten ++ parameters.dropRight(1)).mkString("\u0020") +
+      parameters.lastOption.map("\u0020:" + _).getOrElse("") +
+      "\u000D\u000A"
   }
 }
 
 object Message {
-  def apply(line: String): Message = {
+  def apply(line: String) = {
     val lexemes = line.split("(?<=\u0020)") // keep whitespace (for trailing param)
     val (prefix, command, params, trailing) = (lexemes.headOption, lexemes.tail) match {
       case (Some(x), xs) if x.startsWith(":") => (
@@ -51,181 +261,23 @@ object Message {
         throw FailedParseException(f"Couldn't parse line to message: `$line`")
     }
 
-    val paramsWithTrailing = if (trailing.isEmpty) params else params :+ trailing
-
     (Try(Command.withName(command)), Try(Numeric.withName(command))) match {
-      case (Failure(_), Success(numeric))         => Reply(prefix, numeric, paramsWithTrailing)
+      case (Failure(_), Success(numeric)) =>
+        new Message(prefix     = prefix,
+                    numeric    = Option(numeric),
+                    parameters = if (trailing.isEmpty) params else params :+ trailing)
 
-      case (Success(Command.PRIVMSG), Failure(_)) => Privmsg(prefix, paramsWithTrailing)
-      case (Success(Command.PING), Failure(_))    => Ping(prefix, paramsWithTrailing)
-      case (Success(Command.PONG), Failure(_))    => Pong(prefix, paramsWithTrailing)
-      case (Success(Command.MODE), Failure(_))    => Mode(prefix, paramsWithTrailing)
-      case (Success(Command.JOIN), Failure(_))    => Join(prefix, paramsWithTrailing)
-      case (Success(Command.NICK), Failure(_))    => Nick(prefix, paramsWithTrailing)
-      case (Success(Command.NOTICE), Failure(_))  => Notice(prefix, paramsWithTrailing)
-      case (Success(Command.QUIT), Failure(_))    => Quit(prefix, paramsWithTrailing)
+      case (Success(command), Failure(_)) =>
+        new Message(prefix     = prefix,
+                    command    = Option(command),
+                    parameters = if (trailing.isEmpty) params else params :+ trailing)
 
       case (_, _)  =>
         throw FailedParseException(f"Unknown kind of message while parsing: `$line`")
     }
   }
+
+  def apply(command: Command) = new Message(None, Option(command), None, Seq())
+
+  def apply(command: Command, params: String*) = new Message(None, Option(command), None, params)
 }
-
-trait Targetable {
-  val parameters: Seq[String]
-  lazy val target: String = parameters(0)
-}
-
-/**
- * Represents a server reply message.
- *
- * Represents a reply from the server. Every reply has a numerical code
- * which represents the kind of reply, usually with parameters specific
- * to that reply code.
- */
-case class Reply(val prefix: Option[String] = None,
-                 override val numeric: Numeric,
-                 val parameters: Seq[String]) extends Message {
-  override val command = Command.REPLY
-}
-
-/**
- * Represents a PRIVMSG message
- *
- * Privmsg commands send messages from one user to other users or to
- * channels.
- */
-case class Privmsg(val prefix: Option[String] = None,
-                   val parameters: Seq[String]) extends Message with Targetable {
-
-  override val command = Command.PRIVMSG
-  lazy val action: Boolean = parameters(1).startsWith("\u0001ACTION")
-  lazy val contents: String = if (action) {
-    parameters(1).slice(8, parameters(1).length - 1)
-  } else {
-    parameters(1)
-  }
-
-  require(parameters.size == 2, "A Privmsg must have a target and content")
-}
-
-object Privmsg { def apply(parameters: Seq[String]): Privmsg = Privmsg(None, parameters) }
-
-/**
- * Represents a PING message.
- *
- * Ping commands are commonly used by the server to determine if a user
- * has disconnected, sent at a regular interval. Users may also send
- * pings to the server.
- */
-case class Ping(val prefix: Option[String] = None,
-                val parameters: Seq[String]) extends Message {
-  override val command = Command.PING
-  lazy val pingValue: String = parameters(0)
-  require(parameters.size == 1, "A Ping must have a value")
-}
-
-object Ping { def apply(parameters: Seq[String]): Ping = Ping(None, parameters) }
-
-/**
- * Represents a PONG message.
- *
- * Clients must respond to PING commands with a PONG using the same
- * value before the server-configured timeout.
- */
-case class Pong(val prefix: Option[String] = None,
-                val parameters: Seq[String]) extends Message {
-  override val command = Command.PONG
-  lazy val pongValue: String = parameters(0)
-  require(parameters.size == 1, "A Pong must have a value")
-}
-
-object Pong { def apply(parameters: Seq[String]): Pong = Pong(None, parameters) }
-
-/**
- * Represents a MODE message.
- *
- * Used by clients to set the mode for either a user or channel. Used
- * by the server to report modes (and changes to modes) to clients.
- */
-case class Mode(val prefix: Option[String] = None,
-                val parameters: Seq[String]) extends Message with Targetable {
-
-  override val command = Command.MODE
-  lazy val mode: String = parameters(1)
-  require(parameters.size == 2, "A Mode must have a target and a mode")
-}
-
-object Mode { def apply(parameters: Seq[String]): Mode = Mode(None, parameters) }
-
-/**
- * Represents a NICK message.
- *
- * Used by clients to set their nickname. Also used by clients as the
- * first command sent during logging in on initial connection (if the
- * server doesn't require a password). Used by the server to report
- * nickname changes.
- */
-case class Nick(val prefix: Option[String] = None,
-                val parameters: Seq[String]) extends Message {
-  override val command = Command.NICK
-  lazy val nickname: String = parameters(0)
-}
-
-object Nick { def apply(parameters: Seq[String]): Nick = Nick(None, parameters) }
-
-/**
- * Represents a USER message.
- *
- * Second command used by clients during the login process, used to set
- * ancillary personal information (ident name and real name).
- */
-case class User(val prefix: Option[String] = None,
-                val parameters: Seq[String]) extends Message {
-  // require(parameters.size == 1, "A Nick must have a nickname") // TODO handle server nickname commands
-
-  override val command = Command.USER
-}
-
-object User { def apply(parameters: Seq[String]): User = User(None, parameters) }
-
-/**
- * Represents a JOIN message.
- *
- * Used by clients to join channels. Used by servers to report users
- * joining a channel.
- */
-case class Join(val prefix: Option[String] = None,
-                val parameters: Seq[String]) extends Message {
-  override val command = Command.JOIN
-  require(parameters.size == 1, "A Join must have a channel")
-}
-
-object Join { def apply(parameters: Seq[String]): Join = Join(None, parameters) }
-
-/**
- * Represents a NOTICE message.
- *
- * Used by clients and servers to send out-of-band information to
- * users.
- */
-case class Notice(val prefix: Option[String] = None,
-                  val parameters: Seq[String])
-extends Message {
-  override val command = Command.NOTICE
-}
-
-object Notice { def apply(parameters: Seq[String]): Notice = Notice(None, parameters) }
-
-/**
- * Represents a QUIT message.
- *
- * Used by clients and servers to advise users and the server that the
- * client is preparing to terminate the connection.
- */
-case class Quit(val prefix: Option[String] = None,
-                val parameters: Seq[String] = Seq()) extends Message {
-  override val command = Command.QUIT
-}
-
-object Quit { def apply(parameters: Seq[String]): Quit = Quit(None, parameters) }

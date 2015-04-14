@@ -7,6 +7,8 @@ import java.net.InetSocketAddress
 import scala.util.matching.Regex
 
 import st.emily.swayze.representation.NetworkConfiguration
+import Command._
+import Numeric._
 
 
 case object Ready
@@ -26,20 +28,19 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
 
   override def receive: Receive = {
     case Ready =>
-      sender() ! Nick(Seq(config.nickname))
-      sender() ! User(Seq(config.nickname, config.nickname, "*", config.nickname))
+      sender() ! Message(NICK, config.nickname)
+      sender() ! Message(USER, config.nickname, config.nickname, "*", config.nickname)
 
-    case ping: Ping =>
-      sender() ! Pong(Seq(ping.pingValue))
+    case message: Message =>
+      (message.command, message.numeric) match {
+        case (None, Some(RPL_WELCOME)) =>
+          config.channels.foreach { c => sender() ! Message(JOIN, c) }
 
-    case reply: Reply =>
-      reply.numeric match {
-        case Numeric.RPL_WELCOME =>
-          config.channels.foreach { channel: String => sender() ! Join(Seq(channel)) }
+        case (Some(PING), None) =>
+          sender() ! Message(PONG, message.parameters(0))
 
         case _ =>
-      }
 
-    case _ =>
+      }
   }
 }
