@@ -231,9 +231,9 @@ case class Message(val prefix:     Option[String]  = None,
                    val numeric:    Option[Numeric] = None,
                    val parameters: Seq[String]     = Seq()) {
   override lazy val toString: String = {
-    (Seq(prefix.map(":" + _), numeric, command) ++
+    (Seq(prefix.map("\u003A" + _), numeric, command) ++
       parameters.dropRight(1).map(Option(_)) :+
-      parameters.lastOption.map(":" + _)).flatten.mkString("\u0020") + "\u000D\u000A"
+      parameters.lastOption.map("\u003A" + _)).flatten.mkString("\u0020") + "\u000D\u000A"
   }
 }
 
@@ -241,18 +241,18 @@ object Message {
   def apply(line: String) = {
     val lexemes = line.split("(?<=\u0020)") // keep whitespace (for trailing param)
     val (prefix, command, params, trailing) = (lexemes.headOption, lexemes.tail) match {
-      case (Some(x), xs) if x.startsWith(":") => (
+      case (Some(x), xs) if x.startsWith("\u003A") => (
         Option(x.tail.trim),
         xs.head.trim,
-        xs.tail.takeWhile(!_.startsWith(":")).map(_.trim),
-        xs.tail.dropWhile(!_.startsWith(":")).mkString.stripPrefix(":").stripSuffix("\u000D\u000A")
+        xs.tail.takeWhile(!_.startsWith("\u003A")).map(_.trim),
+        xs.tail.dropWhile(!_.startsWith("\u003A")).mkString.stripPrefix("\u003A").stripSuffix("\u000D\u000A")
       )
 
       case (Some(x), xs) => (
         None,
         x.trim,
-        xs.takeWhile(!_.startsWith(":")).map(_.trim),
-        xs.dropWhile(!_.startsWith(":")).mkString.stripPrefix(":").stripSuffix("\u000D\u000A")
+        xs.takeWhile(!_.startsWith("\u003A")).map(_.trim),
+        xs.dropWhile(!_.startsWith("\u003A")).mkString.stripPrefix("\u003A").stripSuffix("\u000D\u000A")
       )
 
       case _ =>

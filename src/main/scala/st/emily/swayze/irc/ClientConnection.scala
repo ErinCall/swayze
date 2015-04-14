@@ -83,10 +83,10 @@ class ClientConnection(remote:   InetSocketAddress,
         }
       }
 
-    case message: IrcMessage =>
+    case message: IrcMessage => // outgoing
       send(message)
 
-    case message: String =>
+    case message: String =>     // outgoing
       send(message)
 
     case Ack(id) =>
