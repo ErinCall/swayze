@@ -34,7 +34,7 @@ class ClientService(config: NetworkConfiguration) extends Actor with ActorLoggin
     case message: Message =>
       (message.command, message.numeric) match {
         case (None, Some(RPL_WELCOME)) =>
-          config.channels.foreach { c => sender() ! Message(JOIN, c) }
+          sender() ! Message(JOIN, config.channels.mkString(","))
 
         case (Some(PING), None) =>
           sender() ! Message(PONG, message.parameters(0))

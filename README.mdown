@@ -1,31 +1,21 @@
 Swayze
 ======
 
-Swayze is an IRC bouncer written in Scala, meant to run anywhere that
-can run Java.
+Swayze is an IRC bouncer written in Scala, meant to run anywhere that can run Java.
 
-What's a bouncer? A bouncer is an IRC client that remains connected to
-IRC networks on your behalf. With a bouncer, instead of connecting
-directly to IRC, the user just logs into the bouncer, and the bouncer
-forwards along the messages it sees. It's common to use a bouncer for
-a few reasons, such as holding messages so they're not missed, pushing
-notifications in real time, and keeping connection information in
-a centralized place so that a user can use it from anywhere, even
-a mobile device.
+What's a bouncer? A bouncer is an IRC client that remains connected to IRC networks on your behalf. With a bouncer, instead of connecting directly to IRC, the user just logs into the bouncer, and the bouncer forwards along the messages it sees. It's common to use a bouncer for a few reasons, such as holding messages so they're not missed, pushing notifications in real time, and keeping connection information in a centralized place so that a user can use it from anywhere, even a mobile device.
 
 
 Status
 ------
 
-**Swayze does not yet work** and is a work in progress. It should be
-considered experimental.
+**Swayze does not yet work** and is a work in progress. It should be considered experimental.
 
 
 Building
 --------
 
-Swayze can be built anywhere that has Java and Maven installed. Note
-that it's _not_ necessary to have Scala installed.
+Swayze can be built anywhere that has Java and Maven installed. Note that it's _not_ necessary to have Scala installed.
 
 To compile, use this command:
 
@@ -35,12 +25,7 @@ To compile, use this command:
 Configuration
 -------------
 
-Before you can run Swayze, you need a configuration file. Swayze uses
-the [HOCON file format] [1], which is like a variation on JSON that's
-a little kinder on humans. There's not yet a programatic way to manage
-this configuration, nor are the possibilities documented, but if you
-want to get started quickly, the following example should get Swayze
-configured and running on the network of your choice.
+Before you can run Swayze, you need a configuration file. Swayze uses the [HOCON file format] [1], which is like a variation on JSON that's a little kinder on humans. There's not yet a programatic way to manage this configuration, nor are the possibilities documented, but if you want to get started quickly, the following example should get Swayze configured and running on the network of your choice.
 
     swayze {
       networks = [
@@ -55,13 +40,9 @@ configured and running on the network of your choice.
         }
     }
 
-Save that text into a file called `swayze.conf` and use it when running
-Swayze, described below.
+Save that text into a file called `swayze.conf` and use it when running Swayze, described below.
 
-The configuration file can also be used to set some of Akka's options,
-overriding the defaults defined within the program. To get tons of
-debugging output, the following configuration can go right in the same
-file below the Swayze configuration.
+The configuration file can also be used to set some of Akka's options, overriding the defaults defined within the program. To get tons of debugging output, the following configuration can go right in the same file below the Swayze configuration.
 
     akka {
       log-config-on-start              = on
@@ -86,17 +67,13 @@ file below the Swayze configuration.
 Running
 -------
 
-First, complete the build process, as described above, which will build
-a runnable JAR (Java Archive).
+First, complete the build process, as described above, which will build a runnable JAR (Java Archive).
 
     make
 
-This command builds a shaded JAR at `target/swayze-${version}.jar` which
-can be run as a standalone program using Java.
+This command builds a shaded JAR at `target/swayze-${version}.jar` which can be run as a standalone program using Java.
 
-This JAR can be run directly by Java, as in the following example. Note
-that the first argument must be the configuration file (see the above
-section).
+This JAR can be run directly by Java, as in the following example. Note that the first argument must be the configuration file (see the above section).
 
     java -jar target/swayze-0.0.1.jar swayze.conf
 
@@ -104,8 +81,7 @@ section).
 Testing
 -------
 
-Swayze makes use of [simplespec] [2] for tests. To run the tests, use this
-command:
+Swayze makes use of [simplespec] [2] for tests. To run the tests, use this command:
 
     make test
 
@@ -113,13 +89,11 @@ command:
 Documentation
 -------------
 
-If you'd like documentation of Swayze's innards, generate the scaladocs
-with this command:
+If you'd like documentation of Swayze's innards, generate the scaladocs with this command:
 
     make docs
 
-Once that command completes, navigate to
-`target/site/scaladocs/index.html` in your browser.
+Once that command completes, navigate to `target/site/scaladocs/index.html` in your browser.
 
 
 License

@@ -106,14 +106,14 @@ class ClientConnection(remote:   InetSocketAddress,
       context.stop(self)
   }
 
-  def send(text: String): Unit = {
+  private[this] def send(text: String): Unit = {
     val data = ByteString(text + "\r\n", encoding)
     transferred += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))
   }
 
-  def send(message: IrcMessage): Unit = {
+  private[this] def send(message: IrcMessage): Unit = {
     val data = ByteString(message.toString, encoding)
     transferred += data.size
     writesSent += 1
