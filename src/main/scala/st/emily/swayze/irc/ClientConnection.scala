@@ -39,7 +39,6 @@ class ClientConnection(remote:   InetSocketAddress,
 
   context.watch(self)
 
-  override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
   override def preStart: Unit = IO(Tcp) ! Connect(remote)
 

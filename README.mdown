@@ -54,9 +54,9 @@ The configuration file can also be used to set some of Akka's options, overridin
 
       actor {
         debug {
-          autoreceive  = on # DEBUG logging of all AutoReceiveMessages (Kill, PoisonPill etc.)
-          event-stream = on # DEBUG logging of subscription changes on the eventStream
-          lifecycle    = on # DEBUG logging of actor lifecycle changes
+          autoreceive  = on
+          event-stream = on
+          lifecycle    = on
           unhandled    = on
           receive      = on
         }
