@@ -3,13 +3,13 @@ default: package
 build: package
 
 package:
-	@mvn -q clean package -DskipTests
+	@mvn -q package -DskipTests
 
 test:
-	@mvn -q clean test
+	@mvn -q test
 
 install:
-	@mvn -q clean install -DskipTests
+	@mvn -q install -DskipTests
 
 clean:
 	@mvn -q clean
@@ -19,7 +19,7 @@ scaladoc: docs
 javadoc: docs
 
 docs:
-	@mvn -q clean scala:doc -DskipTests
+	@mvn -q scala:doc -DskipTests
 
 # print a variable with `make print-VARIABLE_NAME`
 print-%: ; @echo $*=$($*)

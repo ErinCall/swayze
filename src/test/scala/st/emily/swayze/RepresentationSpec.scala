@@ -1,21 +1,22 @@
 package st.emily.swayze.representation
 
-import com.simple.simplespec.Spec
-import org.junit.Test
+import st.emily.swayze.tests.SwayzeSpec
 
 
-class RepresentationSpec extends Spec {
-  class Configuration {
-    @Test def `Loads URI safe name for a network` = {
-      val config = NetworkConfiguration(name     = "Some Network",
-                                        host     = "irc.example.com",
-                                        port     = 6667,
-                                        encoding = "UTF-8",
-                                        channels = List(),
-                                        modules  = List(),
-                                        nickname = "nick")
+class RepresentationSpec extends SwayzeSpec {
+  describe("A NetworkConfiguration") {
+    describe("given some network name") {
+      it("should return a URI-safe name") {
+        val config = NetworkConfiguration(name     = "Some Network",
+                                          host     = "irc.example.com",
+                                          port     = 6667,
+                                          encoding = "UTF-8",
+                                          channels = List(),
+                                          modules  = List(),
+                                          nickname = "nick")
 
-      config.uriSafeName.must(be("some-network"))
+        config.uriSafeName.should(be("some-network"))
+      }
     }
   }
 }

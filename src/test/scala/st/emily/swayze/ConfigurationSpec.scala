@@ -1,42 +1,42 @@
 package st.emily.swayze
 
 import com.typesafe.config.ConfigFactory
-import com.simple.simplespec.Spec
-import org.junit.Test
 
+import st.emily.swayze.tests.SwayzeSpec
 import st.emily.swayze.representation.NetworkConfiguration
 
 
-class ConfigurationSpec extends Spec {
-  class NetworkConfiguration {
-    @Test def loads_networks = {
-      val text = """
-                 swayze {
-                   networks = [
-                     {
-                       name     = Some Network
-                       host     = irc.example.com
-                       port     = 6667
-                       encoding = UTF-8
-                       channels = [ "#channel" ]
-                       modules  = []
-                       nickname = nick
-                     }
-                     {
-                       name     = Another Network
-                       host     = irc.example.net
-                       port     = 6667
-                       encoding = UTF-8
-                       channels = [ "#room" ]
-                       modules  = [ "away" ]
-                       nickname = nick
-                     }
-                   ]
-                 }
-                 """
+class ConfigurationSpec extends SwayzeSpec {
+  describe("A SwayzeConfig") {
+    it("should parse HOCON into some network configurations") {
+      val text =
+        """
+        swayze {
+          networks = [
+            {
+              name     = Some Network
+              host     = irc.example.com
+              port     = 6667
+              encoding = UTF-8
+              channels = [ "#channel" ]
+              modules  = []
+              nickname = nick
+            }
+            {
+              name     = Another Network
+              host     = irc.example.net
+              port     = 6667
+              encoding = UTF-8
+              channels = [ "#room" ]
+              modules  = [ "away" ]
+              nickname = nick
+            }
+          ]
+        }
+        """
 
       val config = SwayzeConfig(ConfigFactory.parseString(text))
-      config.getNetworkConfigs.must(be(
+      config.getNetworkConfigs.should(be(
         List(NetworkConfiguration(name     = "Some Network",
                                   host     = "irc.example.com",
                                   port     = 6667,

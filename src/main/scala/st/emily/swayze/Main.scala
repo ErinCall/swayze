@@ -34,7 +34,7 @@ object SwayzeApp extends App {
     val bouncerService = BouncerService.props(system, SwayzeConfig(finalConfig))
     val bouncerActor   = system.actorOf(bouncerService, "bouncer-service")
   } catch {
-    case e: Exception =>
+    case e: Throwable =>
       println(s"Couldn't start due to error: ${e.getMessage}")
   }
 }

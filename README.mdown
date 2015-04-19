@@ -19,7 +19,7 @@ Swayze can be built anywhere that has Java and Maven installed. Note that it's _
 
 To compile, use this command:
 
-    make
+    make clean build
 
 
 Configuration
@@ -69,7 +69,7 @@ Running
 
 First, complete the build process, as described above, which will build a runnable JAR (Java Archive).
 
-    make
+    make clean build
 
 This command builds a shaded JAR at `target/swayze-${version}.jar` which can be run as a standalone program using Java.
 
@@ -83,7 +83,7 @@ Testing
 
 Swayze makes use of [simplespec] [2] for tests. To run the tests, use this command:
 
-    make test
+    make clean test
 
 
 Documentation
