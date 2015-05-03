@@ -6,16 +6,17 @@ import st.emily.swayze.SwayzeApp
 
 
 abstract class SwayzeSpec
-  extends FunSpec
-  with ShouldMatchers
-  with OptionValues
-  with Inside
-  with Inspectors
+extends FreeSpec
+with ShouldMatchers
+with OptionValues
+with Inside
+with Inspectors
+with GivenWhenThen
 
 class ApplicationSpec extends SwayzeSpec {
-  describe("Running tests") {
-    it("should run a mock test") {
-      1.should(be(1))
+  "Running tests" - {
+    "should run a mock test" in {
+      1 should be (1)
     }
   }
 }

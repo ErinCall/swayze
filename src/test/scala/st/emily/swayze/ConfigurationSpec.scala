@@ -7,8 +7,8 @@ import st.emily.swayze.representation.NetworkConfiguration
 
 
 class ConfigurationSpec extends SwayzeSpec {
-  describe("A SwayzeConfig") {
-    it("should parse HOCON into some network configurations") {
+  "A SwayzeConfig" - {
+    "parses HOCON into some network configurations" in {
       val text =
         """
         swayze {
@@ -36,7 +36,7 @@ class ConfigurationSpec extends SwayzeSpec {
         """
 
       val config = SwayzeConfig(ConfigFactory.parseString(text))
-      config.getNetworkConfigs.should(be(
+      config.getNetworkConfigs should be (
         List(NetworkConfiguration(name     = "Some Network",
                                   host     = "irc.example.com",
                                   port     = 6667,
@@ -51,7 +51,7 @@ class ConfigurationSpec extends SwayzeSpec {
                                   channels = List("#room"),
                                   modules  = List("away"),
                                   nickname = "nick"))
-       ))
+       )
     }
   }
 }
