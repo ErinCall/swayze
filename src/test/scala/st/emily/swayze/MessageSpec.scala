@@ -8,52 +8,54 @@ import Numeric._
 
 class MessageSpec extends SwayzeSpec {
   "A Message" - {
-    "sent by a server" - {
-      "should make a valid PRIVMSG raw string" in {
-        val message = new Message(prefix     = Option("nick!ident@host.name"),
-                                  command    = Option(PRIVMSG),
-                                  numeric    = None,
-                                  parameters = Seq("target", "This is a message"))
-        message.toString should be (":nick!ident@host.name PRIVMSG target :This is a message\r\n")
+    "when printed as a raw string" - {
+      "received from a server" - {
+        "should make a valid PRIVMSG raw string" in {
+          val message = new Message(prefix     = Option("nick!ident@host.name"),
+                                    command    = Option(PRIVMSG),
+                                    numeric    = None,
+                                    parameters = Seq("target", "This is a message"))
+          message.toString should be (":nick!ident@host.name PRIVMSG target :This is a message\r\n")
+        }
+
+        "should make a valid REPLY raw string" in {
+          val message = new Message(prefix     = Option("irc.host"),
+                                    command    = None,
+                                    numeric    = Option(RPL_WELCOME),
+                                    parameters = Seq("This is a welcome message"))
+          message.toString should be (":irc.host 001 :This is a welcome message\r\n")
+        }
       }
 
-      "should make a valid REPLY raw string" in {
-        val message = new Message(prefix     = Option("irc.host"),
-                                  command    = None,
-                                  numeric    = Option(RPL_WELCOME),
-                                  parameters = Seq("This is a welcome message"))
-        message.toString should be (":irc.host 001 :This is a welcome message\r\n")
-      }
-    }
+      "sent from a client" - {
+        "should make a valid JOIN raw string" in {
+          val message = new Message(prefix     = None,
+                                    command    = Option(JOIN),
+                                    numeric    = None,
+                                    parameters = Seq("#channel"))
+          message.toString should be ("JOIN :#channel\r\n")
+        }
 
-    "sent by a client" - {
-      "should make a valid JOIN raw string" in {
-        val message = new Message(prefix     = None,
-                                  command    = Option(JOIN),
-                                  numeric    = None,
-                                  parameters = Seq("#channel"))
-        message.toString should be ("JOIN :#channel\r\n")
-      }
+        "should make a valid QUIT raw string" in {
+          val message = new Message(prefix     = None,
+                                    command    = Option(QUIT),
+                                    numeric    = None,
+                                    parameters = Seq())
+          message.toString should be ("QUIT\r\n")
+        }
 
-      "should make a valid QUIT raw string" in {
-        val message = new Message(prefix     = None,
-                                  command    = Option(QUIT),
-                                  numeric    = None,
-                                  parameters = Seq())
-        message.toString should be ("QUIT\r\n")
-      }
-
-      "should make a valid PRIVMSG raw string containing significant whitespace" in {
-        val message = new Message(prefix     = None,
-                                  command    = Option(PRIVMSG),
-                                  numeric    = None,
-                                  parameters = Seq("#target", " with significant  whitespace "))
-        message.toString should be ("PRIVMSG #target : with significant  whitespace \r\n")
+        "should make a valid PRIVMSG raw string containing significant whitespace" in {
+          val message = new Message(prefix     = None,
+                                    command    = Option(PRIVMSG),
+                                    numeric    = None,
+                                    parameters = Seq("#target", " with significant  whitespace "))
+          message.toString should be ("PRIVMSG #target : with significant  whitespace \r\n")
+        }
       }
     }
 
     "given a raw string" - {
-      "from a server" - {
+      "received from a server" - {
         "should parse a PRIVMSG" in {
           val message = Message(":nick!ident@host.name PRIVMSG target :This is a message\r\n")
           message should be(new Message(prefix     = Option("nick!ident@host.name"),
@@ -118,7 +120,7 @@ class MessageSpec extends SwayzeSpec {
         }
       }
 
-      "from a client" - {
+      "sent from a client" - {
         "should parse a PING" in {
           val message = Message("PING :8C4EF037\r\n")
           message should be (new Message(prefix     = None,
