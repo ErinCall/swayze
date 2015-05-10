@@ -39,7 +39,6 @@ class ClientConnection(remote:   InetSocketAddress,
 
   context.watch(self)
 
-
   override def preStart: Unit = IO(Tcp) ! Connect(remote)
 
   override def postRestart(thr: Throwable): Unit = context.stop(self)
@@ -63,7 +62,7 @@ class ClientConnection(remote:   InetSocketAddress,
 
   override def receive: Receive = LoggingReceive {
     case Connected(remote, local) =>
-      connection = sender()
+      connection = sender
       connection ! Register(self)
       service ! Ready
 
@@ -77,8 +76,8 @@ class ClientConnection(remote:   InetSocketAddress,
         try {
           service ! IrcMessage(line)
         } catch {
-          case ime: FailedParseException =>
-            log.warning(ime.getMessage)
+          case e: FailedParseException =>
+            log.warning(e.getMessage)
         }
       }
 
