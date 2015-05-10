@@ -1,12 +1,11 @@
 package st.emily.swayze
 
 import akka.actor.ActorSystem
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.ConfigFactory
 import net.sourceforge.argparse4j.ArgumentParsers
 import net.sourceforge.argparse4j.impl.Arguments
-import scala.collection.JavaConversions._
 
-import st.emily.swayze.representation.NetworkConfiguration
+import st.emily.swayze.data.{ NetworkConfig, SwayzeConfig }
 
 
 /**
@@ -34,21 +33,6 @@ object SwayzeApp extends App {
     val bouncerService = BouncerService.props(system, SwayzeConfig(finalConfig))
     val bouncerActor   = system.actorOf(bouncerService, "bouncer-service")
   } catch {
-    case e: Throwable =>
-      println(s"Couldn't start due to error: ${e.getMessage}")
-  }
-}
-
-case class SwayzeConfig(config: Config) {
-  def getNetworkConfigs: List[NetworkConfiguration] = {
-    config.getConfigList("swayze.networks").map { network =>
-      NetworkConfiguration(network.getString("name"),
-                           network.getString("host"),
-                           network.getInt("port"),
-                           network.getString("encoding"),
-                           network.getStringList("channels").toList,
-                           network.getStringList("modules").toList,
-                           network.getString("nickname"))
-    }.toList
+    case e: Throwable => println(s"Couldn't start due to error: ${e.getMessage}")
   }
 }

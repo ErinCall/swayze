@@ -10,7 +10,7 @@ import javax.net.ssl.{ SSLContext, SSLEngine, TrustManager, X509TrustManager }
 
 import st.emily.swayze.exceptions.FailedParseException
 import st.emily.swayze.irc.{ Message => IrcMessage }
-import st.emily.swayze.representation.NetworkConfiguration
+import st.emily.swayze.data.NetworkConfig
 
 
 object ClientConnection {

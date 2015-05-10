@@ -1,7 +1,6 @@
-package st.emily.swayze.irc
+package st.emily.swayze.test
 
-import st.emily.swayze.tests.SwayzeSpec
-
+import st.emily.swayze.irc._
 import Command._
 import Numeric._
 

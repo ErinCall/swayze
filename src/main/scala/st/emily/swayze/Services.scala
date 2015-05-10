@@ -5,7 +5,9 @@ import akka.event.LoggingReceive
 import com.typesafe.config.Config
 import java.net.InetSocketAddress
 
+import st.emily.swayze.data.SwayzeConfig
 import st.emily.swayze.irc.{ ClientConnection, ClientService }
+
 
 
 object BouncerService {

@@ -1,4 +1,4 @@
-package st.emily.swayze.tests
+package st.emily.swayze.test
 
 import org.scalatest._
 
@@ -6,12 +6,12 @@ import st.emily.swayze.SwayzeApp
 
 
 abstract class SwayzeSpec
-extends FreeSpec
-with ShouldMatchers
-with OptionValues
-with Inside
-with Inspectors
-with GivenWhenThen
+  extends FreeSpec
+  with ShouldMatchers
+  with OptionValues
+  with Inside
+  with Inspectors
+  with GivenWhenThen
 
 class ApplicationSpec extends SwayzeSpec {
   "Running tests" - {
