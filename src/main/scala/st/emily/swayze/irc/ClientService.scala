@@ -28,15 +28,18 @@ class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case Ready =>
+      log.debug("Connected, sending login...")
       sender() ! Message(NICK, config.nickname)
       sender() ! Message(USER, config.nickname, config.nickname, "*", config.nickname)
 
     case message: Message =>
       (message.command, message.numeric) match {
         case (None, Some(RPL_WELCOME)) =>
+          log.debug(f"Logged in, joining ${config.channels.mkString(",")}...")
           sender() ! Message(JOIN, config.channels.mkString(","))
 
         case (Some(PING), None) =>
+          log.debug(f"Got PING! Replying PONG with ${message.parameters(0)}...")
           sender() ! Message(PONG, message.parameters(0))
 
         case _ =>
