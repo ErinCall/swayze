@@ -23,7 +23,7 @@ object ClientService {
  * @param config The configuration specific to this network
  */
 class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
-  override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
+  override final val supervisorStrategy = SupervisorStrategy.stoppingStrategy
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
   override def receive: Receive = {
