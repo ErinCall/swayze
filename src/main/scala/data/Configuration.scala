@@ -4,16 +4,16 @@ import com.typesafe.config.Config
 
 
 case class SwayzeConfig(config: Config) {
-  import scala.collection.JavaConversions._
+  import collection.JavaConverters.iterableAsScalaIterableConverter
 
   def getNetConfigs: List[NetworkConfig] = {
-    config.getConfigList("swayze.networks").map { net =>
+    config.getConfigList("swayze.networks").asScala.map { net =>
       NetworkConfig(net.getString("name"),
                     net.getString("host"),
                     net.getInt("port"),
                     net.getString("encoding"),
-                    net.getStringList("channels").toList,
-                    net.getStringList("modules").toList,
+                    net.getStringList("channels").asScala.toList,
+                    net.getStringList("modules").asScala.toList,
                     net.getString("nickname"))
     }.toList
   }
@@ -41,7 +41,7 @@ case class NetworkConfig(name:     String,
     val pipeline = Seq({ s: String => s.toLowerCase                   },
                        { s: String => s.replaceAll("[^0-9a-z]+", "-") })
 
-    pipeline.foldLeft(name) { case (s, f) => f(s) }
+    Function.chain(pipeline)(name)
   }
 }
 
