@@ -20,19 +20,15 @@ object SwayzeApp extends App {
     .help("The filename containing Swayze's configuration")
     .`type`(Arguments.fileType.verifyIsFile.verifyCanRead.verifyCanWrite)
 
-  try {
-    val res            = parser.parseArgsOrFail(args)
-    val configFile     = res.getList[java.io.File]("configuration").get(0)
-    val configText     = io.Source.fromFile(configFile).mkString
+  val res            = parser.parseArgsOrFail(args)
+  val configFile     = res.getList[java.io.File]("configuration").get(0)
+  val configText     = io.Source.fromFile(configFile).mkString
 
-    val swayzeConfig   = ConfigFactory.parseString(configText)
-    val appConfig      = ConfigFactory.load
-    val finalConfig    = swayzeConfig.withFallback(appConfig)
+  val swayzeConfig   = ConfigFactory.parseString(configText)
+  val appConfig      = ConfigFactory.load
+  val finalConfig    = swayzeConfig.withFallback(appConfig)
 
-    val system         = ActorSystem("bouncer-system", finalConfig)
-    val bouncerService = BouncerService.props(system, SwayzeConfig(finalConfig))
-    val bouncerActor   = system.actorOf(bouncerService, "bouncer-service")
-  } catch {
-    case e: Throwable => println(s"Couldn't start due to error: ${e.getMessage}")
-  }
+  val system         = ActorSystem("bouncer-system", finalConfig)
+  val bouncerService = BouncerService.props(system, SwayzeConfig(finalConfig))
+  val bouncerActor   = system.actorOf(bouncerService, "bouncer-service")
 }
