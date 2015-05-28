@@ -35,7 +35,7 @@ class ConfigurationSpec extends SwayzeSpec {
         """
 
       val config = SwayzeConfig(ConfigFactory.parseString(text))
-      config.getNetworkConfigs should be (
+      config.getNetConfigs should be (
         List(NetworkConfig(name     = "Some Network",
                            host     = "irc.example.com",
                            port     = 6667,

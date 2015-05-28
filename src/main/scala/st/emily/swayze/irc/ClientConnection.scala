@@ -8,18 +8,16 @@ import java.net.InetSocketAddress
 import java.security.cert.X509Certificate
 import javax.net.ssl.{ SSLContext, SSLEngine, TrustManager, X509TrustManager }
 
-import st.emily.swayze.exceptions.FailedParseException
+import st.emily.swayze.data.{ FailedParseException, NetworkConfig }
 import st.emily.swayze.irc.{ Message => IrcMessage }
-import st.emily.swayze.data.NetworkConfig
 
 
 object ClientConnection {
   def props(remote:   InetSocketAddress,
             service:  ActorRef,
-            encoding: String) =
+            encoding: String): Props =
     Props(classOf[ClientConnection], remote, service, encoding)
 }
-
 
 /**
  * Maintains the network connection to an IRC server.
@@ -46,16 +44,18 @@ class ClientConnection(remote:   InetSocketAddress,
   private[this] var leftover:      String   = ""
   private[this] var connection:    ActorRef = null
 
-  private[this] var transferred:   Long     = 0
+  private[this] var bytesReceived: Long     = 0
+  private[this] var bytesSent:     Long     = 0
   private[this] var readsReceived: Long     = 0
   private[this] var writesSent:    Long     = 0
   private[this] var writesAcked:   Long     = 0
 
   override def postStop: Unit = {
-    log.info(s"Transferred $transferred bytes from/to [$remote]")
-    log.info(s"Handled $readsReceived receive events")
-    log.info(s"Sent $writesSent write events")
-    log.info(s"Received $writesAcked write acknowledgements")
+    log.debug(s"Sent $bytesSent bytes to [$remote]")
+    log.debug(s"Received $bytesReceived bytes from [$remote]")
+    log.debug(s"Handled $readsReceived receive events")
+    log.debug(s"Sent $writesSent write events")
+    log.debug(s"Received $writesAcked write acknowledgements")
   }
 
   case class Ack(id: Long) extends Event
@@ -68,7 +68,7 @@ class ClientConnection(remote:   InetSocketAddress,
 
     case Received(data) =>
       readsReceived += 1
-      transferred += data.size
+      bytesReceived += data.size
 
       val (lines, last) = partitionMessageLines(leftover + data.decodeString(encoding))
       leftover = last.getOrElse("")
@@ -106,14 +106,14 @@ class ClientConnection(remote:   InetSocketAddress,
 
   private[this] def send(text: String): Unit = {
     val data = ByteString(text + "\r\n", encoding)
-    transferred += data.size
+    bytesSent += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))
   }
 
   private[this] def send(message: IrcMessage): Unit = {
     val data = ByteString(message.toString, encoding)
-    transferred += data.size
+    bytesSent += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))
   }
@@ -127,11 +127,10 @@ class ClientConnection(remote:   InetSocketAddress,
    * agnostic way.
    */
   private[this] def partitionMessageLines(text: String): (Array[String], Option[String]) = {
-    val (lines, last) = text.split("(?<=\u000D\u000A)").partition(_.endsWith("\u000D\u000A"))
+    val (lines, last) = text.split("(?<=${IrcMessage.crlf}").partition(_.endsWith(IrcMessage.crlf))
     (lines.map(_.trim), last.headOption)
   }
 }
-
 
 object SslEngineBuilder {
   def getTrustingEngine(host: String, port: Int): SSLEngine = {

@@ -11,8 +11,9 @@ import st.emily.swayze.irc.{ ClientConnection, ClientService }
 
 
 object BouncerService {
-  def props(system: ActorSystem, config: SwayzeConfig) =
+  def props(system: ActorSystem, config: SwayzeConfig): Props = {
     Props(classOf[BouncerService], system, config)
+  }
 }
 
 /**
@@ -22,11 +23,12 @@ object BouncerService {
  * @param config Swayze configuration
  */
 class BouncerService(system: ActorSystem, config: SwayzeConfig) extends Actor with ActorLogging {
-  config.getNetworkConfigs.foreach { networkConfig =>
-    val name    = networkConfig.uriSafeName
-    val remote  = new InetSocketAddress(networkConfig.host, networkConfig.port)
-    val service = system.actorOf(ClientService.props(networkConfig), name + "-client-service")
-    system.actorOf(ClientConnection.props(remote, service, networkConfig.encoding), name + "-client-connection")
+  config.getNetConfigs.foreach { netConfig =>
+    val name    = netConfig.uriSafeName
+    val remote  = new InetSocketAddress(netConfig.host, netConfig.port)
+    val service = system.actorOf(ClientService.props(netConfig), name + "-client-service")
+
+    system.actorOf(ClientConnection.props(remote, service, netConfig.encoding), name + "-client-connection")
   }
 
   override def receive: Receive = LoggingReceive {

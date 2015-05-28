@@ -38,7 +38,7 @@ class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
           log.debug(f"Logged in, joining ${config.channels.mkString(",")}...")
           sender ! Message(JOIN, config.channels.mkString(","))
 
-        case (Some(PING), None) =>
+        case (Some(PING), _) =>
           log.debug(f"Got PING! Replying PONG with ${message.parameters(0)}...")
           sender ! Message(PONG, message.parameters(0))
 

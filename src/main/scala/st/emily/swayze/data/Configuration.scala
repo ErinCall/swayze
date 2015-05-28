@@ -6,15 +6,15 @@ import com.typesafe.config.Config
 case class SwayzeConfig(config: Config) {
   import scala.collection.JavaConversions._
 
-  def getNetworkConfigs: List[NetworkConfig] = {
-    config.getConfigList("swayze.networks").map { network =>
-      NetworkConfig(network.getString("name"),
-                    network.getString("host"),
-                    network.getInt("port"),
-                    network.getString("encoding"),
-                    network.getStringList("channels").toList,
-                    network.getStringList("modules").toList,
-                    network.getString("nickname"))
+  def getNetConfigs: List[NetworkConfig] = {
+    config.getConfigList("swayze.networks").map { net =>
+      NetworkConfig(net.getString("name"),
+                    net.getString("host"),
+                    net.getInt("port"),
+                    net.getString("encoding"),
+                    net.getStringList("channels").toList,
+                    net.getStringList("modules").toList,
+                    net.getString("nickname"))
     }.toList
   }
 }
@@ -34,8 +34,8 @@ case class NetworkConfig(name:     String,
    * Get a version of the network name safe to use in the name of the
    * actors which interact with it.
    *
-   * TODO: Handle situations where this name conflicts with another network
-   * after conversion.
+   * TODO: Handle situations where this name conflicts with another
+   * network after conversion.
    */
   def uriSafeName: String = {
     val pipeline = Seq({ s: String => s.toLowerCase                   },
@@ -44,3 +44,6 @@ case class NetworkConfig(name:     String,
     pipeline.foldLeft(name) { case (s, f) => f(s) }
   }
 }
+
+case class BufferConfig(name: String,
+                        size: Int)

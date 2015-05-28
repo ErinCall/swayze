@@ -3,7 +3,7 @@ package st.emily.swayze.irc
 import scala.collection.mutable.StringBuilder
 import scala.util.{ Failure, Success, Try }
 
-import st.emily.swayze.exceptions.FailedParseException
+import st.emily.swayze.data.FailedParseException
 
 
 object Command extends Enumeration {
@@ -231,32 +231,39 @@ case class Message(val prefix:     Option[String]  = None,
                    val numeric:    Option[Numeric] = None,
                    val parameters: Seq[String]     = Seq()) {
   override lazy val toString: String = {
-    (Seq(prefix.map("\u003A" + _), numeric, command) ++
+    (
+      Seq(prefix.map(Message.colon + _), numeric, command) ++
       parameters.dropRight(1).map(Option(_)) :+
-      parameters.lastOption.map("\u003A" + _)).flatten.mkString("\u0020") + "\u000D\u000A"
+      parameters.lastOption.map(Message.colon + _)
+    ).flatten.mkString(Message.space) + Message.crlf
   }
 }
 
 object Message {
-  def apply(line: String) = {
-    val lexemes = line.split("(?<=\u0020)") // keep whitespace (for trailing param)
+  // https://tools.ietf.org/html/rfc2812#section-2.3.1
+  final val space = "\u0020"
+  final val crlf  = "\u000D\u000A"
+  final val colon = "\u003A"
+
+  def apply(line: String): Message = {
+    val lexemes = line.split(f"(?<=$space)") // keep whitespace (for trailing param)
     val (prefix, command, params, trailing) = (lexemes.headOption, lexemes.tail) match {
-      case (Some(x), xs) if x.startsWith("\u003A") => (
+      case (Some(x), xs) if x.startsWith(colon) => (
         Option(x.tail.trim),
         xs.head.trim,
-        xs.tail.takeWhile(!_.startsWith("\u003A")).map(_.trim),
-        xs.tail.dropWhile(!_.startsWith("\u003A")).mkString.stripPrefix("\u003A").stripSuffix("\u000D\u000A")
+        xs.tail.takeWhile(!_.startsWith(colon)).map(_.trim),
+        xs.tail.dropWhile(!_.startsWith(colon)).mkString.stripPrefix(colon).stripSuffix(crlf)
       )
 
       case (Some(x), xs) => (
         None,
         x.trim,
-        xs.takeWhile(!_.startsWith("\u003A")).map(_.trim),
-        xs.dropWhile(!_.startsWith("\u003A")).mkString.stripPrefix("\u003A").stripSuffix("\u000D\u000A")
+        xs.takeWhile(!_.startsWith(colon)).map(_.trim),
+        xs.dropWhile(!_.startsWith(colon)).mkString.stripPrefix(colon).stripSuffix(crlf)
       )
 
       case _ =>
-        throw FailedParseException(f"Couldn't parse line to message: `$line`")
+        throw FailedParseException(f"Couldn't parse line to message: '$line'")
     }
 
     (Try(Command.withName(command)), Try(Numeric.withName(command))) match {
@@ -271,11 +278,15 @@ object Message {
                     parameters = if (trailing.isEmpty) params else params :+ trailing)
 
       case (_, _)  =>
-        throw FailedParseException(f"Unknown kind of message while parsing: `$line`")
+        throw FailedParseException(f"Unknown kind of message while parsing: '$line'")
     }
   }
 
-  def apply(command: Command) = new Message(None, Option(command), None, Seq())
+  def apply(command: Command): Message = {
+    new Message(None, Option(command), None, Seq())
+  }
 
-  def apply(command: Command, params: String*) = new Message(None, Option(command), None, params)
+  def apply(command: Command, params: String*): Message = {
+    new Message(None, Option(command), None, params)
+  }
 }

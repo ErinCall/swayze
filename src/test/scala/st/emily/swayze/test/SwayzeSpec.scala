@@ -5,13 +5,13 @@ import org.scalatest._
 import st.emily.swayze.SwayzeApp
 
 
-abstract class SwayzeSpec
-  extends FreeSpec
-  with ShouldMatchers
-  with OptionValues
-  with Inside
-  with Inspectors
-  with GivenWhenThen
+trait SwayzeSpec
+extends FreeSpec
+with ShouldMatchers
+with OptionValues
+with Inside
+with Inspectors
+with GivenWhenThen
 
 class ApplicationSpec extends SwayzeSpec {
   "Running tests" - {

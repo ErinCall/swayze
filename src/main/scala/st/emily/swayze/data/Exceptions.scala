@@ -1,4 +1,4 @@
-package st.emily.swayze.exceptions
+package st.emily.swayze.data
 
 
 case class FailedParseException(message: String) extends Exception(message)
