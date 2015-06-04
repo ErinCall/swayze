@@ -49,8 +49,8 @@ The configuration file can also be used to set some of Akka's options, overridin
       log-dead-letters                 = 10
       log-dead-letters-during-shutdown = on
 
-      loglevel                         = "DEBUG"
-      stdout-loglevel                  = "DEBUG"
+      loglevel                         = DEBUG
+      stdout-loglevel                  = DEBUG
 
       actor {
         debug {
@@ -81,7 +81,7 @@ This JAR can be run directly by Java, as in the following example. Note that the
 Testing
 -------
 
-Swayze makes use of [simplespec] [2] for tests. To run the tests, use this command:
+To run the tests, use this command:
 
     make clean test
 
@@ -103,4 +103,3 @@ Swayze is released under the MIT license and is freely distributable.
 
 
 [1]: https://github.com/typesafehub/config/blob/master/HOCON.md
-[2]: https://github.com/SimpleFinance/simplespec

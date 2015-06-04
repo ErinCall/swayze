@@ -223,8 +223,8 @@ object Numeric extends Enumeration {
   val ERR_USERSDONTMATCH    = Value("502")
 }
 
-import Command._
-import Numeric._
+import Command.Command
+import Numeric.Numeric
 
 case class Message(val prefix:     Option[String]  = None,
                    val command:    Option[Command] = None,

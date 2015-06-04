@@ -127,7 +127,7 @@ class ClientConnection(remote:   InetSocketAddress,
    * agnostic way.
    */
   private[this] def partitionMessageLines(text: String): (Array[String], Option[String]) = {
-    val (lines, last) = text.split("(?<=${IrcMessage.crlf}").partition(_.endsWith(IrcMessage.crlf))
+    val (lines, last) = text.split("(?<=" + IrcMessage.crlf + ")").partition(_.endsWith(IrcMessage.crlf))
     (lines.map(_.trim), last.headOption)
   }
 }

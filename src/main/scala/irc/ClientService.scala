@@ -11,7 +11,9 @@ import Command._
 import Numeric._
 
 
-case object Ready
+sealed trait MetaMessage
+case object Ready extends MetaMessage
+case object LoggedIn extends MetaMessage
 
 object ClientService {
   def props(config: NetworkConfig): Props = Props(new ClientService(config))
@@ -32,11 +34,14 @@ class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
       sender ! Message(NICK, config.nickname)
       sender ! Message(USER, config.nickname, config.nickname, "*", config.nickname)
 
+    case LoggedIn =>
+      log.debug(f"Logged in, joining ${config.channels.mkString(",")}...")
+      sender ! Message(JOIN, config.channels.mkString(","))
+
     case message: Message =>
       (message.command, message.numeric) match {
         case (None, Some(RPL_WELCOME)) =>
-          log.debug(f"Logged in, joining ${config.channels.mkString(",")}...")
-          sender ! Message(JOIN, config.channels.mkString(","))
+          self ! LoggedIn
 
         case (Some(PING), _) =>
           log.debug(f"Got PING! Replying PONG with ${message.parameters(0)}...")
