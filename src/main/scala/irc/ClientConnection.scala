@@ -41,14 +41,14 @@ class ClientConnection(remote:   InetSocketAddress,
 
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
-  private[this] var leftover:      String   = ""
-  private[this] var connection:    ActorRef = null
+  @volatile private[this] var leftover:      String   = ""
+  @volatile private[this] var connection:    ActorRef = null
 
-  private[this] var bytesReceived: Long     = 0
-  private[this] var bytesSent:     Long     = 0
-  private[this] var readsReceived: Long     = 0
-  private[this] var writesSent:    Long     = 0
-  private[this] var writesAcked:   Long     = 0
+  @volatile private[this] var bytesReceived: Long     = 0
+  @volatile private[this] var bytesSent:     Long     = 0
+  @volatile private[this] var readsReceived: Long     = 0
+  @volatile private[this] var writesSent:    Long     = 0
+  @volatile private[this] var writesAcked:   Long     = 0
 
   override def postStop: Unit = {
     log.debug(s"Sent $bytesSent bytes to [$remote]")
@@ -64,7 +64,7 @@ class ClientConnection(remote:   InetSocketAddress,
     case Connected(remote, local) =>
       connection = sender
       connection ! Register(self)
-      service ! Ready
+      service ! ClientReady
 
     case Received(data) =>
       readsReceived += 1
@@ -127,7 +127,8 @@ class ClientConnection(remote:   InetSocketAddress,
    * agnostic way.
    */
   private[this] def partitionMessageLines(text: String): (Array[String], Option[String]) = {
-    val (lines, last) = text.split("(?<=" + IrcMessage.crlf + ")").partition(_.endsWith(IrcMessage.crlf))
+    val (lines, last) = text.split("(?<=" + IrcMessage.crlf + ")")
+                            .span(_.endsWith(IrcMessage.crlf))
     (lines.map(_.trim), last.headOption)
   }
 }

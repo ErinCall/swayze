@@ -38,10 +38,10 @@ case class NetworkConfig(name:     String,
    * network after conversion.
    */
   def uriSafeName: String = {
-    val pipeline = Seq({ s: String => s.toLowerCase                   },
-                       { s: String => s.replaceAll("[^0-9a-z]+", "-") })
+    val pipeline = Function.chain(Seq({ s: String => s.toLowerCase                   },
+                                      { s: String => s.replaceAll("[^0-9a-z]+", "-") }))
 
-    Function.chain(pipeline)(name)
+    pipeline(name)
   }
 }
 

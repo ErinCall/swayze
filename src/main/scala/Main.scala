@@ -13,12 +13,11 @@ import st.emily.swayze.data.{ NetworkConfig, SwayzeConfig }
  */
 object SwayzeApp extends App {
   val parser = ArgumentParsers.newArgumentParser("swayze")
-  parser
-    .addArgument("configuration")
-    .metavar("swayze.conf")
-    .nargs(1)
-    .help("The filename containing Swayze's configuration")
-    .`type`(Arguments.fileType.verifyIsFile.verifyCanRead.verifyCanWrite)
+  parser.addArgument("configuration")
+        .metavar("swayze.conf")
+        .nargs(1)
+        .help("The filename containing Swayze's configuration")
+        .`type`(Arguments.fileType.verifyIsFile.verifyCanRead.verifyCanWrite)
 
   val res            = parser.parseArgsOrFail(args)
   val configFile     = res.getList[java.io.File]("configuration").get(0)

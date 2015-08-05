@@ -245,48 +245,55 @@ object Message {
   final val crlf  = "\u000D\u000A"
   final val colon = "\u003A"
 
-  def apply(line: String): Message = {
-    val lexemes = line.split(f"(?<=$space)") // keep whitespace (for trailing param)
-    val (prefix, command, params, trailing) = (lexemes.headOption, lexemes.tail) match {
-      case (Some(x), xs) if x.startsWith(colon) => (
-        Option(x.tail.trim),
-        xs.head.trim,
-        xs.tail.takeWhile(!_.startsWith(colon)).map(_.trim),
-        xs.tail.dropWhile(!_.startsWith(colon)).mkString.stripPrefix(colon).stripSuffix(crlf)
-      )
-
-      case (Some(x), xs) => (
-        None,
-        x.trim,
-        xs.takeWhile(!_.startsWith(colon)).map(_.trim),
-        xs.dropWhile(!_.startsWith(colon)).mkString.stripPrefix(colon).stripSuffix(crlf)
-      )
-
-      case _ =>
-        throw FailedParseException(f"Couldn't parse line to message: '$line'")
-    }
-
-    (Try(Command.withName(command)), Try(Numeric.withName(command))) match {
-      case (Failure(_), Success(numeric)) =>
-        new Message(prefix     = prefix,
-                    numeric    = Option(numeric),
-                    parameters = if (trailing.isEmpty) params else params :+ trailing)
-
-      case (Success(command), Failure(_)) =>
-        new Message(prefix     = prefix,
-                    command    = Option(command),
-                    parameters = if (trailing.isEmpty) params else params :+ trailing)
-
-      case (_, _)  =>
-        throw FailedParseException(f"Unknown kind of message while parsing: '$line'")
-    }
-  }
-
   def apply(command: Command): Message = {
     new Message(None, Option(command), None, Seq())
   }
 
   def apply(command: Command, params: String*): Message = {
     new Message(None, Option(command), None, params)
+  }
+
+  def apply(line: String): Message = {
+    val lexemes = line.split(f"(?<=$space)")  // keep whitespace (for trailing param)
+    val (prefix, command, parameters) = (lexemes.headOption, lexemes.tail) match {
+      case (Some(first), rest) if first.startsWith(colon) =>  // has prefix
+        (Option(first.stripPrefix(colon).trim), rest.head.trim, getParameters(rest.tail))
+
+      case (Some(first), rest) =>
+        (None, first.trim, getParameters(rest))
+
+      case _ =>
+        throw FailedParseException(f"Couldn't parse line to message: '$line'")
+    }
+
+    val parsedCommand = Try(Command.withName(command))
+    val parsedNumeric = Try(Numeric.withName(command))
+
+    (parsedCommand, parsedNumeric) match {
+      case (Failure(_), Success(numeric)) =>
+        new Message(prefix     = prefix,
+                    numeric    = Option(numeric),
+                    parameters = parameters)
+
+      case (Success(command), Failure(_)) =>
+        new Message(prefix     = prefix,
+                    command    = Option(command),
+                    parameters = parameters)
+
+      case (_, _)  =>
+        throw FailedParseException(f"Unknown kind of message while parsing: '$line'")
+    }
+  }
+
+  private[this] def getParameters(lexemes: Seq[String]): Seq[String] = {
+    val (paramLexemes, trailingLexemes) = lexemes.span(!_.startsWith(colon))
+    val params = paramLexemes.map(_.trim)
+    val trailing = if (trailingLexemes.nonEmpty) {
+      Option(trailingLexemes.mkString
+                            .stripPrefix(colon)
+                            .stripSuffix(crlf))
+    } else None
+
+    params ++ trailing
   }
 }

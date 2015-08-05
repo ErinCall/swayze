@@ -11,9 +11,9 @@ import Command._
 import Numeric._
 
 
-sealed trait MetaMessage
-case object Ready extends MetaMessage
-case object LoggedIn extends MetaMessage
+sealed trait ClientEvent
+case object ClientReady extends ClientEvent
+case object ClientLoggedIn extends ClientEvent
 
 object ClientService {
   def props(config: NetworkConfig): Props = Props(new ClientService(config))
@@ -29,19 +29,19 @@ class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
   override def postRestart(thr: Throwable): Unit = context.stop(self)
 
   override def receive: Receive = {
-    case Ready =>
+    case ClientReady =>
       log.debug("Connected, sending login...")
       sender ! Message(NICK, config.nickname)
       sender ! Message(USER, config.nickname, config.nickname, "*", config.nickname)
 
-    case LoggedIn =>
+    case ClientLoggedIn =>
       log.debug(f"Logged in, joining ${config.channels.mkString(",")}...")
       sender ! Message(JOIN, config.channels.mkString(","))
 
     case message: Message =>
       (message.command, message.numeric) match {
         case (None, Some(RPL_WELCOME)) =>
-          self ! LoggedIn
+          self ! ClientLoggedIn
 
         case (Some(PING), _) =>
           log.debug(f"Got PING! Replying PONG with ${message.parameters(0)}...")

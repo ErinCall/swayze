@@ -6,12 +6,12 @@ import st.emily.swayze.SwayzeApp
 
 
 trait SwayzeSpec
-extends FreeSpec
-with ShouldMatchers
-with OptionValues
-with Inside
-with Inspectors
-with GivenWhenThen
+    extends FreeSpec
+    with ShouldMatchers
+    with OptionValues
+    with Inside
+    with Inspectors
+    with GivenWhenThen
 
 class ApplicationSpec extends SwayzeSpec {
   "Running tests" - {
