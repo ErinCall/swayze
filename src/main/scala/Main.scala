@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import net.sourceforge.argparse4j.ArgumentParsers
 import net.sourceforge.argparse4j.impl.Arguments
+import scala.io.Source
 
 import st.emily.swayze.data.{ NetworkConfig, SwayzeConfig }
 
@@ -21,7 +22,7 @@ object SwayzeApp extends App {
 
   val res            = parser.parseArgsOrFail(args)
   val configFile     = res.getList[java.io.File]("configuration").get(0)
-  val configText     = io.Source.fromFile(configFile).mkString
+  val configText     = Source.fromFile(configFile).mkString
 
   val swayzeConfig   = ConfigFactory.parseString(configText)
   val appConfig      = ConfigFactory.load

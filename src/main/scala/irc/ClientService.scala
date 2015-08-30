@@ -1,6 +1,7 @@
 package st.emily.swayze.irc
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props, SupervisorStrategy, Terminated }
+import akka.event.LoggingReceive
 import akka.io.Tcp
 import akka.util.ByteString
 import java.net.InetSocketAddress
@@ -26,29 +27,41 @@ object ClientService {
  */
 class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
   override final val supervisorStrategy = SupervisorStrategy.stoppingStrategy
-  override def postRestart(thr: Throwable): Unit = context.stop(self)
+  override def postRestart(t: Throwable): Unit = context.stop(self)
 
-  override def receive: Receive = {
-    case ClientReady =>
+  override def receive: Receive = LoggingReceive {
+    case ClientReady => {
       log.debug("Connected, sending login...")
       sender ! Message(NICK, config.nickname)
       sender ! Message(USER, config.nickname, config.nickname, "*", config.nickname)
+    }
 
-    case ClientLoggedIn =>
+    case ClientLoggedIn => {
       log.debug(f"Logged in, joining ${config.channels.mkString(",")}...")
       sender ! Message(JOIN, config.channels.mkString(","))
+    }
 
-    case message: Message =>
+    case message: Message => {
       (message.command, message.numeric) match {
-        case (None, Some(RPL_WELCOME)) =>
+        case (_, Some(RPL_WELCOME)) => {
+          log.debug(message.toString)
           self ! ClientLoggedIn
+        }
 
-        case (Some(PING), _) =>
-          log.debug(f"Got PING! Replying PONG with ${message.parameters(0)}...")
-          sender ! Message(PONG, message.parameters(0))
+        case (_, Some(RPL_WHOREPLY)) => {
+          log.debug(message.toString)
+        }
 
-        case _ =>
+        case (Some(PING), _) => {
+          val pongValue = message.parameters(0)
+          log.debug(f"Got PING! Replying PONG with '${pongValue}'...")
+          sender ! Message(PONG, pongValue)
+        }
 
+        case _ => {
+          log.debug(message.toString)
+        }
       }
+    }
   }
 }

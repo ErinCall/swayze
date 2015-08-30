@@ -13,10 +13,9 @@ import st.emily.swayze.irc.{ Message => IrcMessage }
 
 
 object ClientConnection {
-  def props(remote:   InetSocketAddress,
-            service:  ActorRef,
-            encoding: String): Props =
-    Props(classOf[ClientConnection], remote, service, encoding)
+  def props(remote:  InetSocketAddress,
+            service: ActorRef): Props =
+    Props(classOf[ClientConnection], remote, service)
 }
 
 /**
@@ -29,9 +28,8 @@ object ClientConnection {
  * @param service client service for handling IRC events
  * @param encoding The byte encoding to use to translate bytes to and from strings
  */
-class ClientConnection(remote:   InetSocketAddress,
-                       service:  ActorRef,
-                       encoding: String) extends Actor with ActorLogging {
+class ClientConnection(remote:  InetSocketAddress,
+                       service: ActorRef) extends Actor with ActorLogging {
   import Tcp._
   import context.system
 
@@ -61,58 +59,67 @@ class ClientConnection(remote:   InetSocketAddress,
   case class Ack(id: Long) extends Event
 
   override def receive: Receive = LoggingReceive {
-    case Connected(remote, local) =>
+    case Connected(remote, local) => {
       connection = sender
       connection ! Register(self)
       service ! ClientReady
+    }
 
-    case Received(data) =>
+    case Received(data) => {
       readsReceived += 1
       bytesReceived += data.size
 
-      val (lines, last) = partitionMessageLines(leftover + data.decodeString(encoding))
+      val (lines, last) = partitionMessageLines(leftover + data.utf8String)
       leftover = last.getOrElse("")
       lines.foreach { line =>
         try {
           service ! IrcMessage(line)
         } catch {
-          case e: FailedParseException =>
+          case e: FailedParseException => {
             log.warning(e.getMessage)
+          }
         }
       }
+    }
 
-    case message: IrcMessage => // outgoing
+    case message: IrcMessage => { // outgoing
       send(message)
+    }
 
-    case message: String =>     // outgoing
+    case message: String => {     // outgoing
       send(message)
+    }
 
-    case Ack(id) =>
+    case Ack(id) => {
       writesAcked += 1
+    }
 
-    case PeerClosed =>
+    case PeerClosed => {
       connection ! Close
       context.stop(self)
+    }
 
     case ErrorClosed =>
 
-    case CommandFailed(_: Write) =>
+    case CommandFailed(_: Write) => {
       connection ! ResumeWriting
+    }
 
-    case Terminated(self) =>
+    case Terminated(self) => {
       log.error("Connection lost")
       context.stop(self)
+    }
   }
 
   private[this] def send(text: String): Unit = {
-    val data = ByteString(text + "\r\n", encoding)
+    val data = ByteString(text + "\r\n")
     bytesSent += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))
   }
 
   private[this] def send(message: IrcMessage): Unit = {
-    val data = ByteString(message.toString, encoding)
+    val data = ByteString(message.toString)
     bytesSent += data.size
     writesSent += 1
     connection ! Write(data, Ack(writesSent))
