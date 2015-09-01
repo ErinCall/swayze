@@ -39,9 +39,13 @@ object Message {
 
   def apply(line: String): Message = {
     val lexemes = line.split(f"(?<=$space)")  // keep whitespace (for trailing param)
-    val (prefix, command, parameters) = (lexemes.headOption, lexemes.tail) match {
+    val (prefix, commandOrNumeric, parameters) = (lexemes.headOption, lexemes.tail) match {
       case (Some(head), tail) if head.startsWith(colon) => {  // `head` is either a prefix ...
-        (Option(head.stripPrefix(colon).trim), tail.head.trim, getParameters(tail.tail))
+        (Option(head.stripPrefix(colon).trim),
+                tail.headOption.map(_.trim).getOrElse {
+                  throw FailedParseException(f"No content found after prefix: '$line'")
+                },
+                getParameters(tail.tail))
       }
 
       case (Some(head), tail) => {                            // ... or the numeric/command itself.
@@ -53,8 +57,8 @@ object Message {
       }
     }
 
-    val parsedAsCommand = Try(Command.withName(command))
-    val parsedAsNumeric = Try(Numeric.withName(command))
+    val parsedAsCommand = Try(Command.withName(commandOrNumeric))
+    val parsedAsNumeric = Try(Numeric.withName(commandOrNumeric))
 
     (parsedAsCommand, parsedAsNumeric) match {
       case (Failure(_), Success(numeric)) => {

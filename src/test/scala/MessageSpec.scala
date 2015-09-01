@@ -1,5 +1,6 @@
 package st.emily.swayze.test
 
+import st.emily.swayze.data.FailedParseException
 import st.emily.swayze.irc._
 import Command._
 import Numeric._
@@ -116,6 +117,10 @@ class MessageSpec extends SwayzeSpec {
                                          command    = Option(NOTICE),
                                          numeric    = None,
                                          parameters = Seq("AUTH", "*** Looking up your hostname...")))
+        }
+
+        "won't parse a message with only a prefix" in {
+          a [FailedParseException] should be thrownBy { Message(":irc.server\r\n") }
         }
       }
 
