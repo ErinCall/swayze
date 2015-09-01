@@ -1,25 +1,29 @@
+ifdef QUIET
+    QUIETOPT := "-q"
+endif
+
 default: package
 
 build: package
 
 package:
-	@mvn -q package -DskipTests
+	@mvn ${QUIETOPT} package -DskipTests
 
 test:
-	@mvn -q test
+	@mvn ${QUIETOPT} test
 
 install:
-	@mvn -q install -DskipTests
+	@mvn ${QUIETOPT} install -DskipTests
 
 clean:
-	@mvn -q clean
+	@mvn ${QUIETOPT} clean
 
 documentation: docs
 scaladoc: docs
 javadoc: docs
 
 docs:
-	@mvn -q scala:doc -DskipTests
+	@mvn ${QUIETOPT} scala:doc -DskipTests
 
 # print a variable with `make print-VARIABLE_NAME`
 print-%: ; @echo $*=$($*)
