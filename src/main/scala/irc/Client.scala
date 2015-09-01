@@ -13,11 +13,10 @@ import Numeric._
 
 
 object Client {
-  sealed trait ClientEvent
-  case object  Connected       extends ClientEvent
-  case object  LoggedIn    extends ClientEvent
+  sealed trait Event
+  case object LoggedIn extends Event
 
-  def props(config: NetworkConfig): Props = Props(new Client(config))
+  def props(config: NetworkConfig) = Props(new Client(config))
 }
 
 /**
@@ -30,7 +29,7 @@ class Client(config: NetworkConfig) extends Actor with ActorLogging {
   override def postRestart(t: Throwable): Unit = context.stop(self)
 
   override def receive: Receive = LoggingReceive {
-    case Client.Connected => {
+    case Connection.Connected => {
       log.debug("Connected, sending login...")
       sender ! Message(NICK, config.nickname)
       sender ! Message(USER, config.nickname, config.nickname, "*", config.nickname)

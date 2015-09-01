@@ -13,9 +13,12 @@ import st.emily.swayze.irc.{ Message => IrcMessage }
 
 
 object Connection {
+  sealed trait Event
+  case object Connected extends Event
+  case object Disconnected extends Event
+
   def props(remote:  InetSocketAddress,
-            service: ActorRef): Props =
-    Props(classOf[Connection], remote, service)
+            service: ActorRef) = Props(classOf[Connection], remote, service)
 }
 
 /**
@@ -62,7 +65,7 @@ class Connection(remote:  InetSocketAddress,
     case Connected(remote, local) => {
       connection = sender
       connection ! Register(self)
-      service ! Client.Connected
+      service ! Connection.Connected
     }
 
     case Received(data) => {
@@ -96,6 +99,7 @@ class Connection(remote:  InetSocketAddress,
 
     case PeerClosed => {
       connection ! Close
+      service ! Connection.Disconnected
       context.stop(self)
     }
 
