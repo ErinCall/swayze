@@ -12,10 +12,10 @@ import st.emily.swayze.data.{ FailedParseException, NetworkConfig }
 import st.emily.swayze.irc.{ Message => IrcMessage }
 
 
-object ClientConnection {
+object Connection {
   def props(remote:  InetSocketAddress,
             service: ActorRef): Props =
-    Props(classOf[ClientConnection], remote, service)
+    Props(classOf[Connection], remote, service)
 }
 
 /**
@@ -28,8 +28,8 @@ object ClientConnection {
  * @param service client service for handling IRC events
  * @param encoding The byte encoding to use to translate bytes to and from strings
  */
-class ClientConnection(remote:  InetSocketAddress,
-                       service: ActorRef) extends Actor with ActorLogging {
+class Connection(remote:  InetSocketAddress,
+                 service: ActorRef) extends Actor with ActorLogging {
   import Tcp._
   import context.system
 
@@ -49,11 +49,11 @@ class ClientConnection(remote:  InetSocketAddress,
   @volatile private[this] var writesAcked:   Long     = 0
 
   override def postStop: Unit = {
-    log.debug(s"Sent $bytesSent bytes to [$remote]")
-    log.debug(s"Received $bytesReceived bytes from [$remote]")
-    log.debug(s"Handled $readsReceived receive events")
-    log.debug(s"Sent $writesSent write events")
-    log.debug(s"Received $writesAcked write acknowledgements")
+    log.debug(f"Sent ${bytesSent} bytes to [${remote}]")
+    log.debug(f"Received ${bytesReceived} bytes from [${remote}]")
+    log.debug(f"Handled ${readsReceived} receive events")
+    log.debug(f"Sent ${writesSent} write events")
+    log.debug(f"Received ${writesAcked} write acknowledgements")
   }
 
   case class Ack(id: Long) extends Event
@@ -62,7 +62,7 @@ class ClientConnection(remote:  InetSocketAddress,
     case Connected(remote, local) => {
       connection = sender
       connection ! Register(self)
-      service ! ClientReady
+      service ! Client.Connected
     }
 
     case Received(data) => {

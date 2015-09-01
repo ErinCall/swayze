@@ -6,7 +6,7 @@ import com.typesafe.config.Config
 import java.net.InetSocketAddress
 
 import st.emily.swayze.data.SwayzeConfig
-import st.emily.swayze.irc.{ ClientConnection, ClientService }
+import st.emily.swayze.irc.{ Connection, Client }
 
 
 object BouncerService {
@@ -27,9 +27,9 @@ class BouncerService(system: ActorSystem,
   config.getNetConfigs.foreach { netConfig =>
     val name    = netConfig.uriSafeName
     val remote  = new InetSocketAddress(netConfig.host, netConfig.port)
-    val service = system.actorOf(ClientService.props(netConfig), name + "-client-service")
+    val service = system.actorOf(Client.props(netConfig), name + "-client-service")
 
-    system.actorOf(ClientConnection.props(remote, service), name + "-client-connection")
+    system.actorOf(Connection.props(remote, service), name + "-client-connection")
   }
 
   override def receive: Receive = LoggingReceive {

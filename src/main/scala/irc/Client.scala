@@ -12,12 +12,12 @@ import Command._
 import Numeric._
 
 
-sealed trait ClientEvent
-case object ClientReady extends ClientEvent
-case object ClientLoggedIn extends ClientEvent
+object Client {
+  sealed trait ClientEvent
+  case object  Connected       extends ClientEvent
+  case object  LoggedIn    extends ClientEvent
 
-object ClientService {
-  def props(config: NetworkConfig): Props = Props(new ClientService(config))
+  def props(config: NetworkConfig): Props = Props(new Client(config))
 }
 
 /**
@@ -25,18 +25,18 @@ object ClientService {
  *
  * @param config The configuration specific to this network
  */
-class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
+class Client(config: NetworkConfig) extends Actor with ActorLogging {
   override final val supervisorStrategy = SupervisorStrategy.stoppingStrategy
   override def postRestart(t: Throwable): Unit = context.stop(self)
 
   override def receive: Receive = LoggingReceive {
-    case ClientReady => {
+    case Client.Connected => {
       log.debug("Connected, sending login...")
       sender ! Message(NICK, config.nickname)
       sender ! Message(USER, config.nickname, config.nickname, "*", config.nickname)
     }
 
-    case ClientLoggedIn => {
+    case Client.LoggedIn => {
       log.debug(f"Logged in, joining ${config.channels.mkString(",")}...")
       sender ! Message(JOIN, config.channels.mkString(","))
     }
@@ -45,7 +45,7 @@ class ClientService(config: NetworkConfig) extends Actor with ActorLogging {
       (message.command, message.numeric) match {
         case (_, Some(RPL_WELCOME)) => {
           log.debug(message.toString)
-          self ! ClientLoggedIn
+          self ! Client.LoggedIn
         }
 
         case (_, Some(RPL_WHOREPLY)) => {
