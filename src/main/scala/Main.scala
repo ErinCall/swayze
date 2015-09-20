@@ -18,7 +18,10 @@ object SwayzeApp extends App {
         .metavar("swayze.conf")
         .nargs(1)
         .help("The filename containing Swayze's configuration")
-        .`type`(Arguments.fileType.verifyIsFile.verifyCanRead.verifyCanWrite)
+        .`type`(Arguments.fileType
+                         .verifyIsFile
+                         .verifyCanRead
+                         .verifyCanWrite)
 
   val res            = parser.parseArgsOrFail(args)
   val configFile     = res.getList[java.io.File]("configuration").get(0)
