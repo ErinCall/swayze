@@ -15,7 +15,7 @@ Status
 Building
 --------
 
-Swayze can be built anywhere that has Java and Maven installed. Note that it's _not_ necessary to have Scala installed.
+Swayze can be built anywhere that has Java 7 and Maven installed. Note that it's _not_ necessary to have Scala installed.
 
 To compile, use this command:
 
