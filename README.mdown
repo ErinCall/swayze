@@ -38,6 +38,7 @@ Before you can run Swayze, you need a configuration file. Swayze uses the [HOCON
           modules  = []
           nickname = swayze
         }
+      ]
     }
 
 Save that text into a file called `swayze.conf` and use it when running Swayze, described below.
