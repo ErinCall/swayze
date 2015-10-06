@@ -1,0 +1,80 @@
+# State of the Swayze
+
+## Swayze at the Moment
+
+I began hacking on Swayze sometime last year (in 2014) in an effort to
+better know Scala and because I was a heavy ZNC user at the time.
+I found that ZNC was an okay experience, but that the idea of an IRC was
+fundamentally a hack, and writing for ZNC (or modifying existing plugins
+or other functionality) was a bit confusing: not necessarily because ZNC
+is written in C but due to the age of the project.
+
+I thought (and still think) I stand a chance of getting something
+adequate up and running, and by virtue of it running in Scala, it will
+be far easier for me to modify while benefiting from being on the JVM:
+scalable, effortlessly concurrent, capable of building and running most
+places with little effort.
+
+I began where I felt most comfortable, implementing in Scala
+a functioning subset of the IRC protocol. Along the way, I implemented
+a small no-op client using Akka actors so that I could test that
+implementation. I chose to use actors because I felt it fit the idea of
+IRC (both being asynchronous and event-driven) pretty well.
+
+I've also tried to fit in the kinds of tech I wanted in place as the
+project grows: HOCON for the configuration; Akka (as mentioned) for
+handling the network and helping the various pieces fit together; tests
+using Scalatest.
+
+So far, so good! I've scaffolded a rock-solid (but still nonoperative)
+client.
+
+## Swayze of the Future
+
+A do-nothing client isn't much good to anyone, so what's next? The
+following high-level list of tasks remain before a working bouncer
+results.
+
+ * Collect incoming IRC messages from the client in some kind of
+   concurrency-safe collection.
+    * This may mean augmenting the capabilities of the IRC `Message`
+      objects as they currently exist, to include more information
+      useful for bouncer clients, like timestamping, originating
+      channel/buffer, and such.
+    * This may require additional configuration about what exactly to
+      store, if anything.
+ * Implement a simple IRC server similar to the existing client. Just
+   enough for other IRC clients to connect to and log in with.
+ * At some point (not necessarily before or after this point in the
+   process), learn how to serialize in-memory configuration so that
+   Swayze can be configured by interacting with it directly rather than
+   editing its HOCON offline.
+ * Somewhere around this point, as well, implement correctly working TLS
+   (SSL) and allow configuration to whitelist self-signed certificates
+   which may be used by servers.
+ * Implement users as a concept.
+    * Includes implementing auth (eventually use certificate or some
+      kind of token, but username/password credentials are adequate for
+      now).
+ * Implement ability for server actor may own and manage client actors
+   on behalf of a user.
+ * Implement client actors passing `Message`s back to their owning
+   server actors.
+ * Implement server actor relaying `Messages` back to users connected
+   via actual IRC clients.
+ * Implement server actor delegating specific user-originating IRC
+   `Messages` to various client actors.
+
+That should be enough to get a rather raw bouncer working. After that,
+I have some higher-level ideas I'd like to tinker with to make Swayze
+a truly worthwhile concept.
+
+ * Implement a distinct REST API for clients to use instead of (or in
+   parallel with) the IRC protocol.
+ * Implement ability to query for specific buffered messages (e.g.,
+   messages after a specific time or belonging to a specific buffer).
+    * Would like to strive for compatibility with the playback
+      capability in http://wiki.znc.in/Playback as implemented by
+      various clients like Textual.
+ * Possibly make available a web interface which knows how to interact
+   with the REST API, making Swayze into a remote client system.
