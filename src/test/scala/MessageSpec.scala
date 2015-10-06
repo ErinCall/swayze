@@ -1,12 +1,30 @@
 package st.emily.swayze.test
 
+import org.scalatest.Matchers
+import org.scalatest.matchers.{Matcher, MatchResult}
 import st.emily.swayze.data.FailedParseException
 import st.emily.swayze.irc._
 import Command._
 import Numeric._
 
 
-class MessageSpec extends SwayzeSpec {
+class MessageSpec extends SwayzeSpec with Matchers {
+  class HaveSameBodyMatcher(expected: Message) extends Matcher[Message] {
+
+    def apply(actual: Message) = {
+      MatchResult(
+        actual.prefix == expected.prefix &&
+          actual.command == expected.command &&
+          actual.numeric == expected.numeric &&
+          actual.parameters == expected.parameters,
+        s"""$actual did not have the same body as $expected""",
+        s"""$actual had the same body as $expected"""
+      )
+    }
+  }
+
+  def haveTheSameBodyAs(expected: Message) = new HaveSameBodyMatcher(expected)
+
   "A Message" - {
     "when printed as a raw string" - {
       "received from a server" - {
@@ -58,65 +76,72 @@ class MessageSpec extends SwayzeSpec {
       "received from a server" - {
         "should parse a PRIVMSG" in {
           val message = Message(":nick!ident@host.name PRIVMSG target :This is a message\r\n")
-          message should be(new Message(prefix     = Option("nick!ident@host.name"),
-                                        command    = Option(PRIVMSG),
-                                        numeric    = None,
-                                        parameters = Seq("target", "This is a message")))
+          message should haveTheSameBodyAs(
+              new Message(prefix     = Option("nick!ident@host.name"),
+                          command    = Option(PRIVMSG),
+                          numeric    = None,
+                          parameters = Seq("target", "This is a message")))
         }
 
         "should parse a PRIVMSG containing a colon" in {
           val message = Message(":nick!ident@host.name PRIVMSG target :This is a : message\r\n")
-          message should be (new Message(prefix     = Option("nick!ident@host.name"),
-                                         command    = Option(PRIVMSG),
-                                         numeric    = None,
-                                         parameters = Seq("target", "This is a : message")))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = Option("nick!ident@host.name"),
+                          command    = Option(PRIVMSG),
+                          numeric    = None,
+                          parameters = Seq("target", "This is a : message")))
         }
 
         "should parse a PRIVMSG containing significant whitespace" in {
           val message = Message(":nick!ident@host.name PRIVMSG target :\t This is a message \r\n")
-          message should be (new Message(prefix     = Option("nick!ident@host.name"),
-                                         command    = Option(PRIVMSG),
-                                         numeric    = None,
-                                         parameters = Seq("target", "\t This is a message ")))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = Option("nick!ident@host.name"),
+                          command    = Option(PRIVMSG),
+                          numeric    = None,
+                          parameters = Seq("target", "\t This is a message ")))
         }
 
         "should parse a PRIVMSG containing an ACTION" in {
           val message = Message(":nick!ident@host.name PRIVMSG target :\u0001ACTION emotes\u0001\r\n")
-          message should be (new Message(prefix     = Option("nick!ident@host.name"),
-                                         command    = Option(PRIVMSG),
-                                         numeric    = None,
-                                         parameters = Seq("target", "\u0001ACTION emotes\u0001")))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = Option("nick!ident@host.name"),
+                          command    = Option(PRIVMSG),
+                          numeric    = None,
+                          parameters = Seq("target", "\u0001ACTION emotes\u0001")))
         }
 
         "should parse a server reply (to WHO)" in {
           val message = Message(":irc.host 352 someone #channel user 0.0.0.0 irc.host someone G :0 Real Name\r\n")
-          message should be (new Message(prefix     = Option("irc.host"),
-                                         command    = None,
-                                         numeric    = Option(RPL_WHOREPLY),
-                                         parameters = Seq("someone",
-                                                          "#channel",
-                                                          "user",
-                                                          "0.0.0.0",
-                                                          "irc.host",
-                                                          "someone",
-                                                          "G",
-                                                          "0 Real Name")))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = Option("irc.host"),
+                          command    = None,
+                          numeric    = Option(RPL_WHOREPLY),
+                          parameters = Seq("someone",
+                                           "#channel",
+                                           "user",
+                                           "0.0.0.0",
+                                           "irc.host",
+                                           "someone",
+                                           "G",
+                                           "0 Real Name")))
         }
 
         "should parse a MODE" in {
           val message = Message(":swayze MODE swayze :+i\r\n")
-          message should be (new Message(prefix     = Option("swayze"),
-                                         command    = Option(MODE),
-                                         numeric    = None,
-                                         parameters = Seq("swayze", "+i")))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = Option("swayze"),
+                          command    = Option(MODE),
+                          numeric    = None,
+                          parameters = Seq("swayze", "+i")))
         }
 
         "should parse a NOTICE" in {
           val message = Message(":irc.server NOTICE AUTH :*** Looking up your hostname...\r\n")
-          message should be (new Message(prefix     = Option("irc.server"),
-                                         command    = Option(NOTICE),
-                                         numeric    = None,
-                                         parameters = Seq("AUTH", "*** Looking up your hostname...")))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = Option("irc.server"),
+                          command    = Option(NOTICE),
+                          numeric    = None,
+                          parameters = Seq("AUTH", "*** Looking up your hostname...")))
         }
 
         "won't parse a message with only a prefix" in {
@@ -127,20 +152,30 @@ class MessageSpec extends SwayzeSpec {
       "sent from a client" - {
         "should parse a PING" in {
           val message = Message("PING :8C4EF037\r\n")
-          message should be (new Message(prefix     = None,
-                                         command    = Option(PING),
-                                         numeric    = None,
-                                         parameters = Seq("8C4EF037")))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = None,
+                          command    = Option(PING),
+                          numeric    = None,
+                          parameters = Seq("8C4EF037")))
         }
 
         "should parse a QUIT without a message" in {
           val message = Message("QUIT\r\n")
-          message should be (new Message(prefix     = None,
-                                         command    = Option(QUIT),
-                                         numeric    = None,
-                                         parameters = Seq()))
+          message should haveTheSameBodyAs (
+              new Message(prefix     = None,
+                          command    = Option(QUIT),
+                          numeric    = None,
+                          parameters = Seq()))
         }
       }
+    }
+
+    "should initialize a timestamp" in {
+      val message = new Message(prefix     = None,
+                                command    = Option(QUIT),
+                                numeric    = None,
+                                parameters = Seq())
+      message.timestamp should be (java.util.Calendar.getInstance().getTime())
     }
   }
 }

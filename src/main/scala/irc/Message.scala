@@ -2,6 +2,7 @@ package st.emily.swayze.irc
 
 import scala.collection.mutable.StringBuilder
 import scala.util.{ Failure, Success, Try }
+import java.util.{Calendar, Date}
 
 import st.emily.swayze.data.FailedParseException
 
@@ -12,7 +13,9 @@ import Numeric.Numeric
 case class Message(val prefix:     Option[String]  = None,
                    val command:    Option[Command] = None,
                    val numeric:    Option[Numeric] = None,
-                   val parameters: Seq[String]     = Seq()) {
+                   val parameters: Seq[String]     = Seq(),
+                   val timestamp: Date = Calendar.getInstance().getTime()) {
+
   override lazy val toString: String = {
     val maybeLexemes = Seq(prefix.map(Message.colon + _),
                            numeric,
